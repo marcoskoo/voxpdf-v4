@@ -1,0 +1,602 @@
+     1→   600→   600→    </div>
+     2→   601→   601→    <div class="el-body">
+     3→   602→   602→      <div class="el-sec">Clave API</div>
+     4→   603→   603→      <div class="el-apirow">
+     5→   604→   604→        <input class="el-key-input" id="el-key-input" type="password" placeholder="sk_••••••••••••••••••••" autocomplete="off" onkeydown="if(event.key==='Enter')elConnectAPI()">
+     6→   605→   605→        <button class="el-key-btn" id="el-key-btn" onclick="elConnectAPI()">Conectar</button>
+     7→   606→   606→      </div>
+     8→   607→   607→      <div class="el-status" id="el-status">Obtén tu clave en <a href="https://elevenlabs.io" target="_blank">elevenlabs.io</a> → My Account → API Keys.</div>
+     9→   608→   608→      <div class="el-usage" id="el-usage" style="display:none;"><span id="el-usage-lbl">— / —</span><div class="el-usage-rail"><div class="el-usage-bar" id="el-usage-bar" style="width:0%"></div></div></div>
+    10→   609→   609→      <div class="el-settings" id="el-settings" style="display:none;">
+    11→   610→   610→        <div class="el-sec" style="margin-top:0;">Modelo</div>
+    12→   611→   611→        <div class="el-srow"><span class="el-slbl">Modelo</span><select class="el-model-sel" id="el-model"><option value="eleven_multilingual_v2">Multilingual v2</option><option value="eleven_turbo_v2_5">Turbo v2.5</option><option value="eleven_flash_v2_5">Flash v2.5</option></select></div>
+    13→   612→   612→        <div class="el-srow"><span class="el-slbl">Estabilidad</span><input class="el-range" type="range" id="el-stability" min="0" max="1" step="0.05" value="0.5" oninput="setV('el-stab-val',Math.round(this.value*100)+'%')"><span class="el-sval" id="el-stab-val">50%</span></div>
+    14→   613→   613→        <div class="el-srow"><span class="el-slbl">Similitud</span><input class="el-range" type="range" id="el-similarity" min="0" max="1" step="0.05" value="0.75" oninput="setV('el-sim-val',Math.round(this.value*100)+'%')"><span class="el-sval" id="el-sim-val">75%</span></div>
+    15→   614→   614→        <div class="el-srow"><span class="el-slbl">Estilo</span><input class="el-range" type="range" id="el-style" min="0" max="1" step="0.05" value="0" oninput="setV('el-style-val',Math.round(this.value*100)+'%')"><span class="el-sval" id="el-style-val">0%</span></div>
+    16→   615→   615→      </div>
+    17→   616→   616→      <div id="el-voices-section" style="display:none;">
+    18→   617→   617→        <div style="display:flex;gap:5px;margin-bottom:8px;">
+    19→   618→   618→          <input id="el-voice-search" type="text" placeholder="Filtrar voces…" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-family:var(--font-mono);font-size:10px;padding:5px 8px;outline:none;" oninput="elFilterVoices(this.value)">
+    20→   619→   619→          <select id="el-cat-filter" style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-family:var(--font-mono);font-size:10px;padding:5px 6px;outline:none;" onchange="elFilterVoices(document.getElementById('el-voice-search').value)">
+    21→   620→   620→            <option value="">Todas</option><option value="premade">Premade</option><option value="cloned">Clonadas</option>
+    22→   621→   621→          </select>
+    23→   622→   622→        </div>
+    24→   623→   623→        <div class="el-sec">Voces <span id="el-voice-count" style="color:var(--text3);font-size:8px;"></span></div>
+    25→   624→   624→        <div class="el-voices" id="el-voices-list"></div>
+    26→   625→   625→      </div>
+    27→   626→   626→    </div>
+    28→   627→   627→    <div class="el-foot">
+    29→   628→   628→      <div class="el-active-badge"><div class="dot" id="el-foot-dot"></div><span id="el-foot-lbl">ElevenLabs inactivo</span></div>
+    30→   629→   629→      <button class="el-foot-btn danger" id="el-disable-btn" onclick="elDisable()" style="display:none;">Desactivar</button>
+    31→   630→   630→      <button class="el-foot-btn" onclick="closeELModal()">Cerrar</button>
+    32→   631→   631→      <button class="el-foot-btn primary" id="el-activate-btn" onclick="elActivate()" style="display:none;">✓ Activar voz</button>
+    33→   632→   632→    </div>
+    34→   633→   633→  </div>
+    35→   634→   634→</div>
+    36→   635→   635→
+    37→   636→   636→<!-- MOBILE SHEET -->
+    38→   637→   637→<div class="mob-sheet" id="mob-sheet">
+    39→   638→   638→  <div class="sheet-overlay" onclick="closeMobSheet()"></div>
+    40→   639→   639→  <div class="sheet-body">
+    41→   640→   640→    <div class="sheet-handle"></div>
+    42→   641→   641→    <div class="sheet-title">Ajustes de Voz</div>
+    43→   642→   642→    <div class="sheet-row"><span class="sheet-lbl">Voz</span><select id="voice-sel2" onchange="syncVoice(2)" style="max-width:130px;font-size:10px;"></select></div>
+    44→   643→   643→    <div class="sheet-row"><span class="sheet-lbl">Velocidad</span><div class="sheet-range"><input type="range" id="rate2" min="0.5" max="3" step="0.1" value="1" oninput="syncRate(2)"><span id="rate-v2" style="font-size:10px;color:var(--accent);min-width:28px;text-align:right">1.0×</span></div></div>
+    45→   644→   644→    <div class="sheet-row"><span class="sheet-lbl">Tono</span><div class="sheet-range"><input type="range" id="pitch2" min="0.1" max="2" step="0.1" value="1" oninput="syncPitch(2)"><span id="pitch-v2" style="font-size:10px;color:var(--accent);min-width:28px;text-align:right">1.0</span></div></div>
+    46→   645→   645→    <div class="sheet-row"><span class="sheet-lbl">Volumen</span><div class="sheet-range"><input type="range" id="vol2" min="0" max="1" step="0.05" value="1" oninput="syncVol(2)"><span id="vol-v2" style="font-size:10px;color:var(--accent);min-width:34px;text-align:right">100%</span></div></div>
+    47→   646→   646→    <div class="sheet-row"><span class="sheet-lbl">Omitir encab./pies</span><label class="toggle"><input type="checkbox" id="skip2" checked onchange="syncSkip(2)"><span class="tog-sl"></span></label></div>
+    48→   647→   647→    <div class="sheet-row"><span class="sheet-lbl">Resaltar palabra</span><label class="toggle"><input type="checkbox" id="hi2" checked onchange="syncHi(2)"><span class="tog-sl"></span></label></div>
+    49→   648→   648→    <div class="sheet-row"><span class="sheet-lbl">Modo enfocado</span><label class="toggle"><input type="checkbox" id="focus2" onchange="syncFocus(2)"><span class="tog-sl"></span></label></div>
+    50→   649→   649→    <div class="sheet-row" style="justify-content:center;border-bottom:none;margin-top:4px;"><button onclick="closeMobSheet()" style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text2);font-family:var(--font-mono);font-size:11px;padding:8px 24px;cursor:pointer;width:100%;">Cerrar</button></div>
+    51→   650→   650→  </div>
+    52→   651→   651→</div>
+    53→   652→   652→
+    54→   653→   653→<!-- ZOOM BAR -->
+    55→   654→   654→<div class="zoom-bar" id="zoom-bar">
+    56→   655→   655→  <button class="zoom-btn" onclick="zoomIn()">+</button>
+    57→   656→   656→  <div class="zoom-val" id="zoom-val">15px</div>
+    58→   657→   657→  <button class="zoom-btn" onclick="zoomOut()">−</button>
+    59→   658→   658→  <button class="zoom-btn" onclick="cycleFontFamily()" style="font-size:9px;">Aa</button>
+    60→   659→   659→</div>
+    61→   660→   660→
+    62→   661→   661→<div class="app">
+    63→   662→   662→  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+    64→   663→   663→  <aside class="sidebar" id="sidebar">
+    65→   664→   664→    <div class="sidebar-logo">
+    66→   665→   665→      <div>
+    67→   666→   666→        <div class="logo"><span class="logo-dot"></span>VoxPDF</div>
+    68→   667→   667→        <div class="logo-version">v3 · PDF · EPUB · DOCX · OCR · IA</div>
+    69→   668→   668→      </div>
+    70→   669→   669→      <button class="sidebar-close-btn" onclick="closeSidebar()">✕</button>
+    71→   670→   670→    </div>
+    72→   671→   671→    <div class="sidebar-tabs">
+    73→   672→   672→      <button class="stab active" id="stab-files" onclick="setTab('files')">
+    74→   673→   673→        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+    75→   674→   674→        Archivos
+    76→   675→   675→      </button>
+    77→   676→   676→      <button class="stab" id="stab-toc" onclick="setTab('toc')">
+    78→   677→   677→        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    79→   678→   678→        Índice
+    80→   679→   679→      </button>
+    81→   680→   680→      <button class="stab" id="stab-bk" onclick="setTab('bk')">
+    82→   681→   681→        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+    83→   682→   682→        Marcad.
+    84→   683→   683→      </button>
+    85→   684→   684→      <button class="stab" id="stab-queue" onclick="setTab('queue')">
+    86→   685→   685→        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+    87→   686→   686→        Cola
+    88→   687→   687→      </button>
+    89→   688→   688→      <button class="stab" id="stab-cfg" onclick="setTab('cfg')">
+    90→   689→   689→        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    91→   690→   690→        Ajustes
+    92→   691→   691→      </button>
+    93→   692→   692→    </div>
+    94→   693→   693→    <!-- TAB: ARCHIVOS -->
+    95→   694→   694→    <div class="tab-panel stab-panel active" id="panel-files">
+    96→   695→   695→      <div class="sb-sec">
+    97→   696→   696→        <div class="sec-label">Archivo</div>
+    98→   697→   697→        <button class="upload-btn" onclick="document.getElementById('file-inp').click();closeSidebar()">
+    99→   698→   698→          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+   100→   699→   699→          Abrir PDF / EPUB / DOCX / TXT
+   101→   700→   700→        </button>
+   102→   701→   701→      </div>
+   103→   702→   702→      <div style="padding:7px 12px 3px;border-bottom:1px solid var(--border);flex-shrink:0;"><div class="sec-label">Recientes</div></div>
+   104→   703→   703→      <div class="recents-list" id="recents-list"></div>
+   105→   704→   704→    </div>
+   106→   705→   705→    <!-- TAB: ÍNDICE / TOC -->
+   107→   706→   706→    <div class="tab-panel stab-panel" id="panel-toc">
+   108→   707→   707→      <div class="sb-sec" style="display:flex;align-items:center;justify-content:space-between;">
+   109→   708→   708→        <div class="sec-label" style="margin-bottom:0;">Tabla de contenidos</div>
+   110→   709→   709→        <span style="font-size:9px;color:var(--text3);">✨ = resumir</span>
+   111→   710→   710→      </div>
+   112→   711→   711→      <div class="toc-list" id="toc-list"><div class="no-items">Carga un archivo.</div></div>
+   113→   712→   712→    </div>
+   114→   713→   713→    <!-- TAB: MARCADORES -->
+   115→   714→   714→    <div class="tab-panel stab-panel" id="panel-bk">
+   116→   715→   715→      <div class="sb-sec" style="display:flex;align-items:center;justify-content:space-between;">
+   117→   716→   716→        <div class="sec-label" style="margin-bottom:0;">Marcadores</div>
+   118→   717→   717→        <button onclick="clearAllBookmarks()" style="background:none;border:none;color:var(--text3);font-size:9px;cursor:pointer;">Borrar todo</button>
+   119→   718→   718→      </div>
+   120→   719→   719→      <div class="bk-list" id="bk-list"><div class="no-items">Sin marcadores.<br>Clic derecho en un párrafo.</div></div>
+   121→   720→   720→    </div>
+   122→   721→   721→    <!-- TAB: COLA -->
+   123→   722→   722→    <div class="tab-panel stab-panel" id="panel-queue">
+   124→   723→   723→      <div class="sb-sec">
+   125→   724→   724→        <div class="sec-label">Cola de reproducción</div>
+   126→   725→   725→        <button class="upload-btn ghost" onclick="document.getElementById('file-inp').click()" style="font-size:10px;padding:7px 10px;gap:5px;">+ Agregar archivos</button>
+   127→   726→   726→      </div>
+   128→   727→   727→      <div class="pl-list" id="pl-list"><div class="no-items">Cola vacía.<br>Abre múltiples archivos.</div></div>
+   129→   728→   728→    </div>
+   130→   729→   729→    <!-- TAB: AJUSTES -->
+   131→   730→   730→    <div class="tab-panel stab-panel" id="panel-cfg">
+   132→   731→   731→      <div style="overflow-y:auto;flex:1;padding:7px 12px 14px;">
+   133→   732→   732→        <div class="sec-label" style="margin-top:7px;">Voz</div>
+   134→   733→   733→        <div class="s-row"><span class="s-lbl">Voz</span><select id="voice-sel" onchange="syncVoice(1)" style="max-width:128px;font-size:9px;"></select></div>
+   135→   734→   734→        <div class="s-row"><span class="s-lbl">Velocidad</span><div class="range-wrap"><input type="range" id="rate1" min="0.5" max="3" step="0.1" value="1" oninput="syncRate(1)"><span class="s-val" id="rate-v1">1.0×</span></div></div>
+   136→   735→   735→        <div class="s-row"><span class="s-lbl">Tono</span><div class="range-wrap"><input type="range" id="pitch1" min="0.1" max="2" step="0.1" value="1" oninput="syncPitch(1)"><span class="s-val" id="pitch-v1">1.0</span></div></div>
+   137→   736→   736→        <div class="s-row"><span class="s-lbl">Volumen</span><div class="range-wrap"><input type="range" id="vol1" min="0" max="1" step="0.05" value="1" oninput="syncVol(1)"><span class="s-val" id="vol-v1">100%</span></div></div>
+   138→   737→   737→        <div class="sec-label" style="margin-top:8px;">Lectura</div>
+   139→   738→   738→        <div class="s-row"><span class="s-lbl">Omitir encab./pies</span><label class="toggle"><input type="checkbox" id="skip1" checked onchange="syncSkip(1)"><span class="tog-sl"></span></label></div>
+   140→   739→   739→        <div class="s-row"><span class="s-lbl">Resaltar palabra</span><label class="toggle"><input type="checkbox" id="hi1" checked onchange="syncHi(1)"><span class="tog-sl"></span></label></div>
+   141→   740→   740→        <div class="s-row"><span class="s-lbl">Modo enfocado</span><label class="toggle"><input type="checkbox" id="focus1" onchange="syncFocus(1)"><span class="tog-sl"></span></label></div>
+   142→   741→   741→        <div class="s-row"><span class="s-lbl">Invertir PDF (dark)</span><label class="toggle"><input type="checkbox" id="invert1" onchange="syncInvert(1)"><span class="tog-sl"></span></label></div>
+   143→   742→   742→        <div class="sec-label" style="margin-top:8px;">Apariencia</div>
+   144→   743→   743→        <div class="s-row"><span class="s-lbl">Tema</span><select id="theme-sel" onchange="applyTheme(this.value)"><option value="dark">Oscuro</option><option value="light">Claro</option><option value="sepia">Sepia</option><option value="contrast">Alto contraste</option><option value="ocean">Océano</option></select></div>
+   145→   744→   744→        <div class="s-row"><span class="s-lbl">Tamaño texto</span><div class="range-wrap"><input type="range" id="fontsize-range" min="12" max="24" step="1" value="15" oninput="applyFontSize(this.value)"><span class="s-val" id="fontsize-val">15px</span></div></div>
+   146→   745→   745→        <div class="s-row"><span class="s-lbl">Tipografía</span><select id="fontfam-sel" onchange="applyFontFamily(this.value)"><option value="mono">DM Mono</option><option value="sans">Sistema Sans</option><option value="serif">Georgia</option></select></div>
+   147→   746→   746→        <div class="sec-label" style="margin-top:8px;">IA — Anthropic</div>
+   148→   747→   747→        <div class="s-row"><span class="s-lbl">API Key Claude</span></div>
+   149→   748→   748→        <div style="display:flex;gap:5px;margin-bottom:8px;">
+   150→   749→   749→          <input id="claude-key-input" type="password" placeholder="sk-ant-…" autocomplete="off" style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-family:var(--font-mono);font-size:10px;padding:6px 8px;outline:none;">
+   151→   750→   750→          <button onclick="saveClaudeKey()" style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:var(--font-mono);font-size:10px;padding:6px 10px;cursor:pointer;">Guardar</button>
+   152→   751→   751→        </div>
+   153→   752→   752→        <div id="claude-key-status" style="font-size:9px;color:var(--text3);margin-bottom:8px;">Necesaria para resúmenes con IA.</div>
+   154→   753→   753→        <div class="sec-label" style="margin-top:8px;">Acciones</div>
+   155→   754→   754→        <div style="display:flex;flex-direction:column;gap:5px;margin-top:2px;">
+   156→   755→   755→          <button onclick="openELModal();closeSidebar()" class="el-sidebar-btn" id="el-sidebar-btn"><span class="el-dot" id="el-sidebar-dot"></span><span id="el-sidebar-lbl">ElevenLabs — Voces Neurales</span></button>
+   157→   756→   756→          <button onclick="openStatsModal();closeSidebar()" class="upload-btn ghost" style="font-size:10px;padding:7px 10px;gap:5px;">📊 Estadísticas de lectura</button>
+   158→   757→   757→          <button onclick="openRSVP();closeSidebar()" class="upload-btn ghost" style="font-size:10px;padding:7px 10px;gap:5px;">⚡ Speed Reading RSVP</button>
+   159→   758→   758→          <button onclick="openExportModal();closeSidebar()" class="upload-btn ghost" style="font-size:10px;padding:7px 10px;gap:5px;">🎙 Descargar Audio</button>
+   160→   759→   759→          <button onclick="openKeymapModal();closeSidebar()" class="upload-btn ghost" style="font-size:10px;padding:7px 10px;gap:5px;">⌨️ Personalizar Atajos</button>
+   161→   760→   760→          <button onclick="openOnboarding();closeSidebar()" class="upload-btn ghost" style="font-size:10px;padding:7px 10px;gap:5px;">🎓 Ver Tutorial</button>
+   162→   761→   761→        </div>
+   163→   762→   762→      </div>
+   164→   763→   763→    </div>
+   165→   764→   764→  </aside>
+   166→   765→   765→  <!-- MAIN -->
+   167→   766→   766→  <div class="main">
+   168→   767→   767→    <div class="topbar" style="position:relative;">
+   169→   768→   768→      <button class="btn-icon" onclick="toggleSidebar()" aria-label="Menú">
+   170→   769→   769→        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+   171→   770→   770→      </button>
+   172→   771→   771→      <div class="topbar-title" id="topbar-title">Sin archivo — VoxPDF v3</div>
+   173→   772→   772→      <div class="wave paused" id="wave-anim"><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div></div>
+   174→   773→   773→      <span class="el-pill" id="el-topbar-pill" onclick="openELModal()" title="ElevenLabs activo">XI</span>
+   175→   774→   774→      <span class="rsvp-pill" id="rsvp-topbar-pill" onclick="openRSVP()" title="Abrir RSVP">⚡RSVP</span>
+   176→   775→   775→      <span class="page-badge" id="page-badge"></span>
+   177→   776→   776→      <div class="topbar-speeds" style="display:flex;gap:2px;flex-shrink:0;">
+   178→   777→   777→        <button class="spd-btn on" id="s1" onclick="setSpeed(1)">1×</button>
+   179→   778→   778→        <button class="spd-btn" id="s15" onclick="setSpeed(1.5)">1.5×</button>
+   180→   779→   779→        <button class="spd-btn" id="s2" onclick="setSpeed(2)">2×</button>
+   181→   780→   780→      </div>
+   182→   781→   781→      <button class="btn-icon" id="btn-search" onclick="toggleSearch()" title="Buscar (Ctrl+F)" aria-label="Buscar">
+   183→   782→   782→        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+   184→   783→   783→      </button>
+   185→   784→   784→      <button class="btn-icon" id="btn-focus" onclick="toggleFocusMode()" title="Modo enfocado" aria-label="Modo enfocado">
+   186→   785→   785→        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+   187→   786→   786→      </button>
+   188→   787→   787→      <button class="btn-icon" id="btn-zoom" onclick="toggleZoomBar()" title="Zoom" aria-label="Zoom de texto">
+   189→   788→   788→        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+   190→   789→   789→      </button>
+   191→   790→   790→      <button class="btn-icon" onclick="document.getElementById('file-inp').click()" aria-label="Abrir archivo">
+   192→   791→   791→        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+   193→   792→   792→      </button>
+   194→   793→   793→      <div class="search-bar" id="search-bar">
+   195→   794→   794→        <input class="search-input" id="search-input" type="text" placeholder="Buscar en el texto…" oninput="runSearch(this.value)" onkeydown="searchKey(event)">
+   196→   795→   795→        <span class="search-count" id="search-count">0/0</span>
+   197→   796→   796→        <button class="btn-icon" onclick="searchPrev()" style="width:26px;height:26px;border-radius:6px;" aria-label="Anterior">‹</button>
+   198→   797→   797→        <button class="btn-icon" onclick="searchNext()" style="width:26px;height:26px;border-radius:6px;" aria-label="Siguiente">›</button>
+   199→   798→   798→        <button class="btn-icon" onclick="closeSearch()" style="width:26px;height:26px;border-radius:6px;" aria-label="Cerrar">✕</button>
+   200→   799→   799→      </div>
+   201→   800→   800→    </div>
+   202→   801→   801→    <div class="content" id="content" role="main">
+   203→   802→   802→      <div class="drop-zone" id="drop-zone">
+   204→   803→   803→        <div class="drop-icon">📚</div>
+   205→   804→   804→        <div class="drop-title">VoxPDF v3</div>
+   206→   805→   805→        <div class="drop-sub">Lee PDF, EPUB, DOCX en voz alta. OCR para escaneados. Resúmenes con Claude. Speed reading RSVP.</div>
+   207→   806→   806→        <div class="drop-zone-box" id="drop-box" onclick="document.getElementById('file-inp').click()" role="button" tabindex="0">
+   208→   807→   807→          <div style="font-size:22px;opacity:.35;">⊕</div>
+   209→   808→   808→          <p>Arrastra archivos aquí o toca para seleccionar</p>
+   210→   809→   809→          <small>PDF · EPUB · DOCX · TXT · Imágenes (OCR)</small>
+   211→   810→   810→        </div>
+   212→   811→   811→        <div class="drop-preview" id="drop-preview"></div>
+   213→   812→   812→        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:6px;">
+   214→   813→   813→          <span class="kbd">Space</span><span style="font-size:9px;color:var(--text3)">Play</span>
+   215→   814→   814→          <span class="kbd">← →</span><span style="font-size:9px;color:var(--text3)">Párrafo</span>
+   216→   815→   815→          <span class="kbd">Ctrl+F</span><span style="font-size:9px;color:var(--text3)">Buscar</span>
+   217→   816→   816→          <span class="kbd">B</span><span style="font-size:9px;color:var(--text3)">Marcar</span>
+   218→   817→   817→          <span class="kbd">R</span><span style="font-size:9px;color:var(--text3)">RSVP</span>
+   219→   818→   818→        </div>
+   220→   819→   819→      </div>
+   221→   820→   820→      <div id="pdf-viewer" style="display:none;" role="document"></div>
+   222→   821→   821→    </div>
+   223→   822→   822→    <!-- DESKTOP PLAYER -->
+   224→   823→   823→    <div class="player" id="player">
+   225→   824→   824→      <div class="prog-rail" onclick="seekByClick(event)"><div class="prog-bar" id="prog-bar"></div></div>
+   226→   825→   825→      <div class="pl-left">
+   227→   826→   826→        <button class="btn-ctrl" onclick="prevPara()" title="← Párrafo anterior" aria-label="Párrafo anterior"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19,20 9,12 19,4"/><line x1="5" y1="4" x2="5" y2="20"/></svg></button>
+   228→   827→   827→        <button class="btn-ctrl" onclick="skip(-10)" title="J −10s" aria-label="−10 segundos"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12a9.5 9.5 0 1 1 1.8-5.6"/><polyline points="2,6 2,12 8,12"/></svg></button>
+   229→   828→   828→        <button class="btn-play" id="btn-play" onclick="togglePlay()" aria-label="Play/Pausa">
+   230→   829→   829→          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="play-ic" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5,3 19,12 5,21"/></svg>
+   231→   830→   830→        </button>
+   232→   831→   831→        <button class="btn-ctrl" onclick="skip(10)" title="L +10s" aria-label="+10 segundos"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 12a9.5 9.5 0 1 0-1.8-5.6"/><polyline points="22,6 22,12 16,12"/></svg></button>
+   233→   832→   832→        <button class="btn-ctrl" onclick="nextPara()" title="→ Párrafo siguiente" aria-label="Párrafo siguiente"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5,4 15,12 5,20"/><line x1="19" y1="4" x2="19" y2="20"/></svg></button>
+   234→   833→   833→        <button class="btn-stop" onclick="stopReading()" title="S Parar" aria-label="Parar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="9" height="9" fill="currentColor" stroke="none"><rect x="4" y="4" width="16" height="16" rx="2"/></svg></button>
+   235→   834→   834→      </div>
+   236→   835→   835→      <div class="pl-center">
+   237→   836→   836→        <div class="pl-title" id="pl-title">Sin reproducción</div>
+   238→   837→   837→        <div class="pl-sub" id="pl-sub">—</div>
+   239→   838→   838→      </div>
+   240→   839→   839→      <div class="pl-right">
+   241→   840→   840→        <button class="spd-btn on" id="d1" onclick="setSpeed(1)">1×</button>
+   242→   841→   841→        <button class="spd-btn" id="d15" onclick="setSpeed(1.5)">1.5×</button>
+   243→   842→   842→        <button class="spd-btn" id="d2" onclick="setSpeed(2)">2×</button>
+   244→   843→   843→        <div class="pl-time" id="pl-time">0:00</div>
+   245→   844→   844→      </div>
+   246→   845→   845→    </div>
+   247→   846→   846→    <!-- MOBILE PLAYER -->
+   248→   847→   847→    <div class="mob-player" id="mob-player">
+   249→   848→   848→      <div class="mob-prog"><div class="mob-prog-bar" id="mob-prog-bar"></div></div>
+   250→   849→   849→      <div class="mob-info">
+   251→   850→   850→        <div class="mob-info-text">
+   252→   851→   851→          <div class="mob-info-title" id="mob-title">Sin reproducción</div>
+   253→   852→   852→          <div class="mob-info-sub" id="mob-sub">—</div>
+   254→   853→   853→        </div>
+   255→   854→   854→        <div style="display:flex;gap:3px;align-items:center;">
+   256→   855→   855→          <button class="spd-btn" id="ms1" onclick="setSpeed(1)" style="padding:3px 5px;">1×</button>
+   257→   856→   856→          <button class="spd-btn" id="ms15" onclick="setSpeed(1.5)" style="padding:3px 5px;">1.5×</button>
+   258→   857→   857→          <button class="spd-btn" id="ms2" onclick="setSpeed(2)" style="padding:3px 5px;">2×</button>
+   259→   858→   858→        </div>
+   260→   859→   859→      </div>
+   261→   860→   860→      <div class="mob-controls">
+   262→   861→   861→        <button class="mob-btn-sm" onclick="prevPara()" aria-label="Anterior"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polygon points="19,20 9,12 19,4"/><line x1="5" y1="4" x2="5" y2="20"/></svg></button>
+   263→   862→   862→        <button class="mob-btn-sm" onclick="skip(-10)" aria-label="−10s"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M2.5 12a9.5 9.5 0 1 1 1.8-5.6"/><polyline points="2,6 2,12 8,12"/></svg></button>
+   264→   863→   863→        <button class="mob-btn-big" id="mob-btn-play" onclick="togglePlay()" aria-label="Play/Pausa"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="mob-play-ic" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><polygon points="5,3 19,12 5,21"/></svg></button>
+   265→   864→   864→        <button class="mob-btn-sm" onclick="skip(10)" aria-label="+10s"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21.5 12a9.5 9.5 0 1 0-1.8-5.6"/><polyline points="22,6 22,12 16,12"/></svg></button>
+   266→   865→   865→        <button class="mob-btn-sm" onclick="nextPara()" aria-label="Siguiente"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polygon points="5,4 15,12 5,20"/><line x1="19" y1="4" x2="19" y2="20"/></svg></button>
+   267→   866→   866→        <button class="mob-stop" onclick="stopReading()" aria-label="Parar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="10" height="10" fill="currentColor" stroke="none"><rect x="4" y="4" width="16" height="16" rx="2"/></svg></button>
+   268→   867→   867→      </div>
+   269→   868→   868→    </div>
+   270→   869→   869→    <nav class="mob-nav">
+   271→   870→   870→      <div class="mob-nav-inner">
+   272→   871→   871→        <button class="mob-nav-btn" onclick="document.getElementById('file-inp').click()" aria-label="Abrir"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>Abrir</button>
+   273→   872→   872→        <button class="mob-nav-btn" onclick="toggleSearch()" aria-label="Buscar"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Buscar</button>
+   274→   873→   873→        <button class="mob-nav-btn" onclick="openRSVP()" aria-label="RSVP"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>RSVP</button>
+   275→   874→   874→        <button class="mob-nav-btn" onclick="toggleSidebar()" aria-label="Menú"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>Menú</button>
+   276→   875→   875→        <button class="mob-nav-btn" onclick="openMobSheet()" aria-label="Ajustes"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Ajustes</button>
+   277→   876→   876→      </div>
+   278→   877→   877→    </nav>
+   279→   878→   878→  </div>
+   280→   879→   879→</div>
+   281→   880→   880→<script>
+   282→   881→   881→'use strict';
+   283→   882→   882→pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+   284→   883→   883→const SK='vox3_s',RK='vox3_r',PK='vox3_p',BK='vox3_b',HLK='vox3_h',HIST_K='vox3_hist',KMK='vox3_km',OBK='vox3_ob',CLKEY='vox3_claude',EL_KEY_SK='vox3_el_key',EL_CFG_SK='vox3_el_cfg';
+   285→   884→   884→const S={paras:[],fileName:'',playing:false,curIdx:0,voice:null,voices:[],rate:1,pitch:1,vol:1,readList:[],offsets:[],bigText:'',utterance:null,watchdog:null,wakelock:null,silentCtx:null,silentSrc:null,fontSize:15,fontFamily:'mono',theme:'dark',focusMode:false,invertMode:false,highlights:{},bookmarks:{},playlist:[],playlistIdx:0,searchHits:[],searchIdx:0,tocChapters:[],sessionStart:null};
+   286→   885→   885→let KM={};
+   287→   886→   886→const EL={apiKey:'',active:false,voiceId:'',voiceName:'',voices:[],filteredVoices:[],model:'eleven_multilingual_v2',stability:.5,similarity:.75,style:0,audioCtx:null,audioSource:null,playbackIdx:0,isPlaying:false,previewAudio:null,previewVoiceId:null,usedChars:0,limitChars:10000};
+   288→   887→   887→const EL_BASE='https://api.elevenlabs.io/v1';
+   289→   888→   888→
+   290→   889→   889→/* ══ HELPERS ══ */
+   291→   890→   890→function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+   292→   891→   891→function setV(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+   293→   892→   892→function setChk(id,v){const e=document.getElementById(id);if(e)e.checked=v;}
+   294→   893→   893→function setR(id,v){['1','2'].forEach(n=>{const e=document.getElementById(id+n);if(e)e.value=v;});}
+   295→   894→   894→let _tt;
+   296→   895→   895→function toast(msg,type,dur=3000){const e=document.getElementById('toast');e.textContent=msg;e.className='toast show'+(type?' '+type:'');clearTimeout(_tt);_tt=setTimeout(()=>e.classList.remove('show'),dur);}
+   297→   896→   896→function showLoading(msg){document.getElementById('loading').classList.add('show');setV('loading-txt',msg||'Procesando…');}
+   298→   897→   897→function hideLoading(){document.getElementById('loading').classList.remove('show');}
+   299→   898→   898→
+   300→   899→   899→/* ══ ONBOARDING ══ */
+   301→   900→   900→const OB_STEPS=[
+   302→   901→   901→  {e:'📚',h:'Bienvenido a VoxPDF v3',p:'Lee PDF, EPUB, DOCX en voz alta. OCR para escaneados. Resúmenes con Claude IA. Speed reading RSVP. Todo en tu navegador.'},
+   303→   902→   902→  {e:'🎙️',h:'Voz y controles',p:'Space = play/pausa · ← → = párrafo · B = marcador · J/L = ±10s · R = RSVP. Elige voz, velocidad y tono en Ajustes.'},
+   304→   903→   903→  {e:'✨',h:'Resumen por capítulo con IA',p:'Clic derecho → "Resumir capítulo" o el botón ✨ en el índice. Claude lee el capítulo y genera un resumen al instante.'},
+   305→   904→   904→  {e:'🔬',h:'OCR para PDFs escaneados',p:'Si el PDF no tiene texto seleccionable, VoxPDF usa Tesseract.js para extraer texto de las imágenes automáticamente.'},
+   306→   905→   905→  {e:'⚡',h:'Speed Reading RSVP',p:'Una palabra a la vez en el centro de la pantalla. Tecla R o el botón RSVP. Ajusta la velocidad de 100 a 800 palabras por minuto.'},
+   307→   906→   906→  {e:'📊',h:'Estadísticas avanzadas',p:'Ajustes → Estadísticas: WPM promedio, tiempo total leído, sesiones por día y gráfico histórico de los últimos 14 días.'},
+   308→   907→   907→];
+   309→   908→   908→let _obStep=0;
+   310→   909→   909→function initOnboarding(){if(!localStorage.getItem(OBK))openOnboarding();}
+   311→   910→   910→function openOnboarding(){_obStep=0;_renderOB();document.getElementById('onboard-overlay').classList.add('open');}
+   312→   911→   911→function skipOnboard(){localStorage.setItem(OBK,'1');document.getElementById('onboard-overlay').classList.remove('open');}
+   313→   912→   912→function obNext(){if(_obStep<OB_STEPS.length-1){_obStep++;_renderOB();}else skipOnboard();}
+   314→   913→   913→function _renderOB(){
+   315→   914→   914→  const s=OB_STEPS[_obStep];
+   316→   915→   915→  document.getElementById('ob-steps').innerHTML=`<div class="onboard-step active"><div class="onboard-emoji">${s.e}</div><div class="onboard-h">${s.h}</div><div class="onboard-p">${s.p}</div></div>`;
+   317→   916→   916→  document.getElementById('ob-dots').innerHTML=OB_STEPS.map((_,i)=>`<div class="onboard-dot${i===_obStep?' active':''}"></div>`).join('');
+   318→   917→   917→  document.getElementById('ob-next-btn').textContent=_obStep===OB_STEPS.length-1?'¡Empezar! 🚀':'Siguiente →';
+   319→   918→   918→}
+   320→   919→   919→
+   321→   920→   920→/* ══ TABS / SIDEBAR ══ */
+   322→   921→   921→function setTab(id){document.querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.stab-panel').forEach(p=>p.classList.remove('active'));document.getElementById('stab-'+id).classList.add('active');document.getElementById('panel-'+id).classList.add('active');}
+   323→   922→   922→function toggleSidebar(){const sb=document.getElementById('sidebar'),ov=document.getElementById('sidebar-overlay');if(window.innerWidth<=700){const o=sb.classList.toggle('open');ov.classList.toggle('show',o);}else sb.classList.toggle('collapsed');}
+   324→   923→   923→function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('show');}
+   325→   924→   924→
+   326→   925→   925→/* ══ THEME / FONT ══ */
+   327→   926→   926→function applyTheme(t){S.theme=t;document.documentElement.setAttribute('data-theme',t);const s=document.getElementById('theme-sel');if(s)s.value=t;saveSettings();}
+   328→   927→   927→function applyFontSize(v){S.fontSize=+v;document.documentElement.style.setProperty('--para-size',v+'px');setV('fontsize-val',v+'px');setV('zoom-val',v+'px');const e=document.getElementById('fontsize-range');if(e)e.value=v;saveSettings();}
+   329→   928→   928→function applyFontFamily(f){S.fontFamily=f;const m={mono:"'DM Mono',monospace",sans:"system-ui,sans-serif",serif:"Georgia,serif"};document.documentElement.style.setProperty('--para-family',m[f]||m.mono);const s=document.getElementById('fontfam-sel');if(s)s.value=f;saveSettings();}
+   330→   929→   929→function cycleFontFamily(){const f=['mono','sans','serif'];applyFontFamily(f[(f.indexOf(S.fontFamily)+1)%f.length]);}
+   331→   930→   930→function toggleZoomBar(){document.getElementById('zoom-bar').classList.toggle('open');document.getElementById('btn-zoom').classList.toggle('active');}
+   332→   931→   931→function zoomIn(){applyFontSize(Math.min(S.fontSize+1,24));}
+   333→   932→   932→function zoomOut(){applyFontSize(Math.max(S.fontSize-1,10));}
+   334→   933→   933→function syncFocus(from){const v=document.getElementById('focus'+from).checked;S.focusMode=v;const o=document.getElementById('focus'+(from===1?2:1));if(o)o.checked=v;document.documentElement.setAttribute('data-focus',v?'on':'off');document.getElementById('btn-focus')?.classList.toggle('active',v);saveSettings();}
+   335→   934→   934→function toggleFocusMode(){S.focusMode=!S.focusMode;['focus1','focus2'].forEach(id=>{const e=document.getElementById(id);if(e)e.checked=S.focusMode;});document.documentElement.setAttribute('data-focus',S.focusMode?'on':'off');document.getElementById('btn-focus')?.classList.toggle('active',S.focusMode);saveSettings();}
+   336→   935→   935→function syncInvert(from){const v=document.getElementById('invert'+from).checked;S.invertMode=v;document.documentElement.setAttribute('data-invert',v?'on':'off');saveSettings();}
+   337→   936→   936→function openMobSheet(){document.getElementById('mob-sheet').classList.add('open');}
+   338→   937→   937→function closeMobSheet(){document.getElementById('mob-sheet').classList.remove('open');}
+   339→   938→   938→
+   340→   939→   939→/* ══ SETTINGS ══ */
+   341→   940→   940→function saveSettings(){try{localStorage.setItem(SK,JSON.stringify({rate:S.rate,pitch:S.pitch,vol:S.vol,skipHF:document.getElementById('skip1')?.checked,hilite:document.getElementById('hi1')?.checked,fontSize:S.fontSize,fontFamily:S.fontFamily,theme:S.theme,focusMode:S.focusMode,invertMode:S.invertMode}));}catch(e){}}
+   342→   941→   941→function loadSettings(){
+   343→   942→   942→  try{
+   344→   943→   943→    const s=JSON.parse(localStorage.getItem(SK)||'{}');
+   345→   944→   944→    S.rate=s.rate||1;S.pitch=s.pitch||1;S.vol=s.vol!==undefined?s.vol:1;
+   346→   945→   945→    S.fontSize=s.fontSize||15;S.fontFamily=s.fontFamily||'mono';S.theme=s.theme||'dark';
+   347→   946→   946→    S.focusMode=!!s.focusMode;S.invertMode=!!s.invertMode;
+   348→   947→   947→    setR('rate',S.rate);setR('pitch',S.pitch);setR('vol',S.vol);
+   349→   948→   948→    setV('rate-v1',S.rate.toFixed(1)+'×');setV('rate-v2',S.rate.toFixed(1)+'×');
+   350→   949→   949→    setV('pitch-v1',S.pitch.toFixed(1));setV('pitch-v2',S.pitch.toFixed(1));
+   351→   950→   950→    setV('vol-v1',Math.round(S.vol*100)+'%');setV('vol-v2',Math.round(S.vol*100)+'%');
+   352→   951→   951→    if(s.skipHF!==undefined){setChk('skip1',s.skipHF);setChk('skip2',s.skipHF);}
+   353→   952→   952→    if(s.hilite!==undefined){setChk('hi1',s.hilite);setChk('hi2',s.hilite);}
+   354→   953→   953→    applyTheme(S.theme);applyFontSize(S.fontSize);applyFontFamily(S.fontFamily);
+   355→   954→   954→    setChk('focus1',S.focusMode);document.documentElement.setAttribute('data-focus',S.focusMode?'on':'off');
+   356→   955→   955→    setChk('invert1',S.invertMode);document.documentElement.setAttribute('data-invert',S.invertMode?'on':'off');
+   357→   956→   956→    updateSpeedBtns(S.rate);
+   358→   957→   957→    const ck=localStorage.getItem(CLKEY);if(ck){const i=document.getElementById('claude-key-input');if(i)i.value=ck;setV('claude-key-status','✓ Claude API configurada');}
+   359→   958→   958→  }catch(e){}
+   360→   959→   959→}
+   361→   960→   960→function saveClaudeKey(){const v=document.getElementById('claude-key-input')?.value.trim();if(!v)return;localStorage.setItem(CLKEY,v);setV('claude-key-status','✓ Claude API configurada');toast('Claude API key guardada','ok');}
+   362→   961→   961→function getClaudeKey(){return localStorage.getItem(CLKEY)||'';}
+   363→   962→   962→
+   364→   963→   963→/* ══ VOICES ══ */
+   365→   964→   964→function loadVoices(){
+   366→   965→   965→  S.voices=speechSynthesis.getVoices();if(!S.voices.length)return;
+   367→   966→   966→  ['voice-sel','voice-sel2'].forEach(sid=>{
+   368→   967→   967→    const sel=document.getElementById(sid);if(!sel)return;sel.innerHTML='';
+   369→   968→   968→    const grps={};S.voices.forEach((v,i)=>{const l=v.lang.split('-')[0];if(!grps[l])grps[l]=[];grps[l].push({v,i});});
+   370→   969→   969→    Object.entries(grps).sort(([a],[b])=>a.localeCompare(b)).forEach(([lang,arr])=>{
+   371→   970→   970→      const og=document.createElement('optgroup');og.label=lang;
+   372→   971→   971→      arr.forEach(({v,i})=>{const op=document.createElement('option');op.value=i;op.textContent=v.name+(v.localService?' ✓':'');og.appendChild(op);});
+   373→   972→   972→      sel.appendChild(og);
+   374→   973→   973→    });
+   375→   974→   974→    const es=S.voices.findIndex(v=>v.lang.startsWith('es'));if(es>=0)sel.value=es;
+   376→   975→   975→    S.voice=S.voices[parseInt(sel.value)]||null;
+   377→   976→   976→  });
+   378→   977→   977→}
+   379→   978→   978→speechSynthesis.onvoiceschanged=loadVoices;loadVoices();
+   380→   979→   979→function syncVoice(from){const v=parseInt(document.getElementById('voice-sel'+(from===1?'':'2')).value);S.voice=S.voices[v]||null;const o=document.getElementById('voice-sel'+(from===1?'2':''));if(o)o.value=v;saveSettings();}
+   381→   980→   980→function syncRate(from){const v=parseFloat(document.getElementById('rate'+from).value);S.rate=v;setR('rate',v);setV('rate-v1',v.toFixed(1)+'×');setV('rate-v2',v.toFixed(1)+'×');updateSpeedBtns(v);saveSettings();}
+   382→   981→   981→function syncPitch(from){const v=parseFloat(document.getElementById('pitch'+from).value);S.pitch=v;setR('pitch',v);setV('pitch-v1',v.toFixed(1));setV('pitch-v2',v.toFixed(1));saveSettings();}
+   383→   982→   982→function syncVol(from){const v=parseFloat(document.getElementById('vol'+from).value);S.vol=v;setR('vol',v);setV('vol-v1',Math.round(v*100)+'%');setV('vol-v2',Math.round(v*100)+'%');saveSettings();}
+   384→   983→   983→function syncSkip(from){const v=document.getElementById('skip'+from).checked;setChk('skip1',v);setChk('skip2',v);applyHFvisibility();saveSettings();}
+   385→   984→   984→function syncHi(from){const v=document.getElementById('hi'+from).checked;setChk('hi1',v);setChk('hi2',v);saveSettings();}
+   386→   985→   985→function setSpeed(v){S.rate=v;setR('rate',v);setV('rate-v1',v.toFixed(1)+'×');setV('rate-v2',v.toFixed(1)+'×');updateSpeedBtns(v);if(S.playing){const i=S.curIdx;stopReading(true);startReading(i);}saveSettings();}
+   387→   986→   986→function updateSpeedBtns(v){const ids=['1','15','2'],vals=[1,1.5,2];ids.forEach((id,i)=>{const on=vals[i]===v;['s','d','ms'].forEach(p=>{const e=document.getElementById(p+id);if(e)e.classList.toggle('on',on);});});}
+   388→   987→   987→
+   389→   988→   988→/* ══ RECENTS ══ */
+   390→   989→   989→function getRecents(){try{return JSON.parse(localStorage.getItem(RK)||'[]');}catch(e){return[];}}
+   391→   990→   990→function addRecent(name,pct){let r=getRecents().filter(x=>x.name!==name);r.unshift({name,pct,date:Date.now()});try{localStorage.setItem(RK,JSON.stringify(r.slice(0,12)));}catch(e){}renderRecents();}
+   392→   991→   991→function removeRecent(name,ev){ev&&ev.stopPropagation();try{localStorage.setItem(RK,JSON.stringify(getRecents().filter(x=>x.name!==name)));}catch(e){}renderRecents();}
+   393→   992→   992→function renderRecents(){
+   394→   993→   993→  const list=document.getElementById('recents-list'),r=getRecents();
+   395→   994→   994→  if(!r.length){list.innerHTML='<div class="no-items">Sin archivos recientes.</div>';return;}
+   396→   995→   995→  list.innerHTML=r.map(it=>{
+   397→   996→   996→    const d=new Date(it.date).toLocaleDateString('es',{day:'2-digit',month:'short'});
+   398→   997→   997→    const pct=it.pct?Math.round(it.pct*100)+'%':'—';
+   399→   998→   998→    return`<div class="recent-item${it.name===S.fileName?' is-active':''}" onclick="hintRecent('${esc(it.name)}')">
+   400→   999→   999→      <div class="rec-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg></div>
+   401→  1000→  1000→      <div class="rec-info"><div class="rec-name">${esc(it.name)}</div><div class="rec-meta">${d} · ${pct}</div></div>
+   402→  1001→  1001→      <button class="rec-del" onclick="removeRecent('${esc(it.name)}',event)">×</button>
+   403→  1002→  1002→    </div>`;
+   404→  1003→  1003→  }).join('');
+   405→  1004→  1004→}
+   406→  1005→  1005→function hintRecent(name){toast('Recarga "'+name+'" para continuar desde tu progreso');}
+   407→  1006→  1006→
+   408→  1007→  1007→/* ══ PROGRESS ══ */
+   409→  1008→  1008→function saveProgress(name,idx){try{const p=JSON.parse(localStorage.getItem(PK)||'{}');p[name]={idx,ts:Date.now()};localStorage.setItem(PK,JSON.stringify(p));addRecent(name,S.paras.length?idx/S.paras.length:0);}catch(e){}}
+   410→  1009→  1009→function restoreProgress(name){try{const p=JSON.parse(localStorage.getItem(PK)||'{}');if(p[name]){const idx=Math.min(p[name].idx,S.paras.length-1);if(idx>0)setTimeout(()=>{jumpTo(idx);toast('Continuando desde pág.'+S.paras[idx].page,'ok');},500);}}catch(e){}}
+   411→  1010→  1010→
+   412→  1011→  1011→/* ══ SESSIONS ══ */
+   413→  1012→  1012→function startSession(){S.sessionStart={ts:Date.now(),file:S.fileName,startIdx:S.curIdx};}
+   414→  1013→  1013→function endSession(){
+   415→  1014→  1014→  if(!S.sessionStart)return;
+   416→  1015→  1015→  const dur=Math.round((Date.now()-S.sessionStart.ts)/1000);S.sessionStart=null;
+   417→  1016→  1016→  if(dur<5)return;
+   418→  1017→  1017→  try{const h=JSON.parse(localStorage.getItem(HIST_K)||'[]');h.unshift({file:S.fileName,dur,date:Date.now(),endIdx:S.curIdx,wpm:Math.round((S.curIdx-S.readList[0]||0)*12/(dur||1)*60)});localStorage.setItem(HIST_K,JSON.stringify(h.slice(0,100)));}catch(e){}
+   419→  1018→  1018→}
+   420→  1019→  1019→
+   421→  1020→  1020→/* ══ FILE LOADING ══ */
+   422→  1021→  1021→document.getElementById('file-inp').addEventListener('change',e=>{const files=Array.from(e.target.files);if(!files.length)return;e.target.value='';if(files.length>1){files.forEach(f=>addToPlaylist(f));}loadFileObj(files[0]);});
+   423→  1022→  1022→const _content=document.getElementById('content'),_dropBox=document.getElementById('drop-box');
+   424→  1023→  1023→['dragenter','dragover'].forEach(ev=>_content.addEventListener(ev,e=>{e.preventDefault();_dropBox.classList.add('dragover');}));
+   425→  1024→  1024→['dragleave','drop'].forEach(ev=>_content.addEventListener(ev,e=>{e.preventDefault();_dropBox.classList.remove('dragover');}));
+   426→  1025→  1025→_content.addEventListener('drop',e=>{const files=Array.from(e.dataTransfer.files).filter(isSupported);if(!files.length){toast('Formato no soportado','err');return;}if(files.length>1)files.forEach(f=>addToPlaylist(f));renderDropPreview(files);loadFileObj(files[0]);});
+   427→  1026→  1026→_dropBox.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')document.getElementById('file-inp').click();});
+   428→  1027→  1027→function isSupported(f){return /\.(pdf|epub|docx|doc|txt|png|jpg|jpeg|webp|tiff?)$/i.test(f.name);}
+   429→  1028→  1028→function renderDropPreview(files){const pv=document.getElementById('drop-preview');if(!pv)return;pv.innerHTML=files.map(f=>`<div class="drop-prev-chip"><span>📄</span>${esc(f.name.slice(0,26))}${f.name.length>26?'…':''}</div>`).join('');}
+   430→  1029→  1029→
+   431→  1030→  1030→async function loadFileObj(file){
+   432→  1031→  1031→  const ext=file.name.split('.').pop().toLowerCase();
+   433→  1032→  1032→  showLoading('Cargando '+file.name+'…');
+   434→  1033→  1033→  try{
+   435→  1034→  1034→    if(ext==='pdf')await loadPDF(file);
+   436→  1035→  1035→    else if(ext==='epub')await loadEPUB(file);
+   437→  1036→  1036→    else if(ext==='docx'||ext==='doc')await loadDOCX(file);
+   438→  1037→  1037→    else if(ext==='txt')await loadTXT(file);
+   439→  1038→  1038→    else if(/^(png|jpe?g|webp|tiff?)$/.test(ext))await loadImageOCR(file);
+   440→  1039→  1039→    else{hideLoading();toast('Formato no soportado: .'+ext,'err');}
+   441→  1040→  1040→  }catch(err){hideLoading();toast('Error: '+err.message,'err');console.error(err);}
+   442→  1041→  1041→}
+   443→  1042→  1042→
+   444→  1043→  1043→/* ── PDF ── */
+   445→  1044→  1044→async function loadPDF(file){
+   446→  1045→  1045→  S.fileName=file.name;
+   447→  1046→  1046→  const ab=await file.arrayBuffer();
+   448→  1047→  1047→  const doc=await pdfjsLib.getDocument({data:ab}).promise;
+   449→  1048→  1048→  S.highlights=getHighlights(file.name);S.bookmarks=getBookmarks(file.name);
+   450→  1049→  1049→  await extractRenderPDF(doc,file.name);
+   451→  1050→  1050→  _afterLoad(file.name,doc.numPages+' páginas');
+   452→  1051→  1051→}
+   453→  1052→  1052→async function extractRenderPDF(pdfDoc,filename){
+   454→  1053→  1053→  const viewer=document.getElementById('pdf-viewer');viewer.innerHTML='';S.paras=[];
+   455→  1054→  1054→  const N=pdfDoc.numPages;
+   456→  1055→  1055→  for(let pg=1;pg<=N;pg++){
+   457→  1056→  1056→    showLoading('Extrayendo… '+pg+'/'+N);
+   458→  1057→  1057→    const page=await pdfDoc.getPage(pg);
+   459→  1058→  1058→    const content=await page.getTextContent();
+   460→  1059→  1059→    const vp=page.getViewport({scale:1});
+   461→  1060→  1060→    const pH=vp.height,HZ=pH*.08,FZ=pH*.08;
+   462→  1061→  1061→    const items=content.items.slice().sort((a,b)=>b.transform[5]-a.transform[5]);
+   463→  1062→  1062→    const lines=[];let cur=[],cy=null;
+   464→  1063→  1063→    for(const it of items){const y=it.transform[5];if(cy===null||Math.abs(y-cy)<3){cur.push(it);cy=y;}else{if(cur.length)lines.push({y:cy,items:cur});cur=[it];cy=y;}}
+   465→  1064→  1064→    if(cur.length)lines.push({y:cy,items:cur});
+   466→  1065→  1065→    // Check if page has no text → offer OCR
+   467→  1066→  1066→    const pageText=lines.map(l=>l.items.map(i=>i.str).join('')).join('').trim();
+   468→  1067→  1067→    const pageDiv=document.createElement('div');pageDiv.className='pdf-page';
+   469→  1068→  1068→    const badge=document.createElement('div');badge.className='pg-badge';badge.textContent='Página '+pg+' de '+N;pageDiv.appendChild(badge);
+   470→  1069→  1069→    if(!pageText&&N>0){
+   471→  1070→  1070→      // Scanned page — render as image + run OCR
+   472→  1071→  1071→      const canvas=document.createElement('canvas');
+   473→  1072→  1072→      const vp2=page.getViewport({scale:1.5});
+   474→  1073→  1073→      canvas.width=vp2.width;canvas.height=vp2.height;
+   475→  1074→  1074→      await page.render({canvasContext:canvas.getContext('2d'),viewport:vp2}).promise;
+   476→  1075→  1075→      await _ocrCanvas(canvas,pg,pageDiv,filename);
+   477→  1076→  1076→    }else{
+   478→  1077→  1077→      let buf=[],lastT=null;
+   479→  1078→  1078→      const flush=(isH,isF)=>{
+   480→  1079→  1079→        const txt=buf.join(' ').replace(/\s+/g,' ').trim();buf=[];if(!txt)return;
+   481→  1080→  1080→        const idx=S.paras.length;
+   482→  1081→  1081→        const {el,wEls,wOffsets,sEls,sentOffsets}=_buildParaEl(txt,idx);
+   483→  1082→  1082→        if(isH||isF)el.classList.add('hf-line');
+   484→  1083→  1083→        if(S.highlights[idx])el.classList.add('highlighted');
+   485→  1084→  1084→        if(S.bookmarks[idx]){el.classList.add('bookmarked');_addBkDot(el);}
+   486→  1085→  1085→        if(isH||isF){const tg=document.createElement('span');tg.className='skip-tag';tg.textContent=isH?'encab.':'pie';el.appendChild(tg);}
+   487→  1086→  1086→        S.paras.push({text:txt,page:pg,isH,isF,el,wEls,wOffsets,sEls,sentOffsets});pageDiv.appendChild(el);
+   488→  1087→  1087→      };
+   489→  1088→  1088→      for(const l of lines){
+   490→  1089→  1089→        const txt=l.items.map(i=>i.str).join(' ').trim();if(!txt)continue;
+   491→  1090→  1090→        const relY=pH-l.y;const t=relY<HZ?'h':relY>(pH-FZ)?'f':'b';
+   492→  1091→  1091→        if(lastT&&t!==lastT)flush(lastT==='h',lastT==='f');buf.push(txt);lastT=t;
+   493→  1092→  1092→      }
+   494→  1093→  1093→      if(buf.length)flush(lastT==='h',lastT==='f');
+   495→  1094→  1094→    }
+   496→  1095→  1095→    viewer.appendChild(pageDiv);
+   497→  1096→  1096→  }
+   498→  1097→  1097→  applyHFvisibility();updateProgress();
+   499→  1098→  1098→}
+   500→  1099→  1099→
+   501→  1100→  1100→/* ── OCR con Tesseract.js ── */
+   502→  1101→  1101→async function _loadTesseract(){
+   503→  1102→  1102→  if(window.Tesseract)return window.Tesseract;
+   504→  1103→  1103→  return new Promise((res,rej)=>{
+   505→  1104→  1104→    const s=document.createElement('script');
+   506→  1105→  1105→    s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+   507→  1106→  1106→    s.onload=()=>res(window.Tesseract);s.onerror=()=>rej(new Error('No se pudo cargar Tesseract'));
+   508→  1107→  1107→    document.head.appendChild(s);
+   509→  1108→  1108→  });
+   510→  1109→  1109→}
+   511→  1110→  1110→async function _ocrCanvas(canvas,pg,pageDiv,filename){
+   512→  1111→  1111→  const overlay=document.createElement('div');overlay.className='ocr-overlay';
+   513→  1112→  1112→  const rail=document.createElement('div');rail.className='ocr-bar-rail';
+   514→  1113→  1113→  const bar=document.createElement('div');bar.className='ocr-bar';rail.appendChild(bar);
+   515→  1114→  1114→  const lbl=document.createElement('div');lbl.className='ocr-lbl';lbl.textContent='OCR pág.'+pg+'…';
+   516→  1115→  1115→  overlay.appendChild(lbl);overlay.appendChild(rail);pageDiv.appendChild(overlay);
+   517→  1116→  1116→  try{
+   518→  1117→  1117→    const Tesseract=await _loadTesseract();
+   519→  1118→  1118→    const result=await Tesseract.recognize(canvas,_detectOCRLang(),{
+   520→  1119→  1119→      logger:m=>{if(m.status==='recognizing text')bar.style.width=Math.round(m.progress*100)+'%';}
+   521→  1120→  1120→    });
+   522→  1121→  1121→    overlay.remove();
+   523→  1122→  1122→    const text=result.data.text.trim();
+   524→  1123→  1123→    if(text){
+   525→  1124→  1124→      _addParagraphsFromText(text,pg,pageDiv);
+   526→  1125→  1125→    }else{
+   527→  1126→  1126→      const note=document.createElement('p');note.className='pdf-para hf-line';note.textContent='[Página '+pg+' — sin texto reconocible]';pageDiv.appendChild(note);
+   528→  1127→  1127→    }
+   529→  1128→  1128→  }catch(e){overlay.remove();const note=document.createElement('p');note.className='pdf-para hf-line';note.textContent='[OCR falló en pág.'+pg+': '+e.message+']';pageDiv.appendChild(note);}
+   530→  1129→  1129→}
+   531→  1130→  1130→function _detectOCRLang(){const lang=(S.voice?.lang||navigator.language||'es').split('-')[0];const map={es:'spa',en:'eng',fr:'fra',de:'deu',pt:'por',it:'ita'};return map[lang]||'spa';}
+   532→  1131→  1131→async function loadImageOCR(file){
+   533→  1132→  1132→  S.fileName=file.name;S.paras=[];S.highlights=getHighlights(file.name);S.bookmarks=getBookmarks(file.name);
+   534→  1133→  1133→  const viewer=document.getElementById('pdf-viewer');viewer.innerHTML='';
+   535→  1134→  1134→  const pageDiv=document.createElement('div');pageDiv.className='pdf-page';
+   536→  1135→  1135→  const badge=document.createElement('div');badge.className='pg-badge';badge.textContent='Imagen: '+file.name;pageDiv.appendChild(badge);
+   537→  1136→  1136→  const img=new Image();img.src=URL.createObjectURL(file);
+   538→  1137→  1137→  await new Promise(r=>{img.onload=r;});
+   539→  1138→  1138→  const canvas=document.createElement('canvas');canvas.width=img.width;canvas.height=img.height;
+   540→  1139→  1139→  canvas.getContext('2d').drawImage(img,0,0);URL.revokeObjectURL(img.src);
+   541→  1140→  1140→  viewer.appendChild(pageDiv);
+   542→  1141→  1141→  await _ocrCanvas(canvas,1,pageDiv,file.name);
+   543→  1142→  1142→  _afterLoad(file.name,'Imagen OCR');
+   544→  1143→  1143→}
+   545→  1144→  1144→function _addParagraphsFromText(text,pg,pageDiv){
+   546→  1145→  1145→  text.split(/\n\s*\n/).map(p=>p.replace(/\n/g,' ').replace(/\s+/g,' ').trim()).filter(p=>p.length>3).forEach(txt=>{
+   547→  1146→  1146→    const idx=S.paras.length;
+   548→  1147→  1147→    const {el,wEls,wOffsets,sEls,sentOffsets}=_buildParaEl(txt,idx);
+   549→  1148→  1148→    if(S.highlights[idx])el.classList.add('highlighted');
+   550→  1149→  1149→    if(S.bookmarks[idx]){el.classList.add('bookmarked');_addBkDot(el);}
+   551→  1150→  1150→    S.paras.push({text:txt,page:pg,isH:false,isF:false,el,wEls,wOffsets,sEls,sentOffsets});pageDiv.appendChild(el);
+   552→  1151→  1151→  });
+   553→  1152→  1152→}
+   554→  1153→  1153→
+   555→  1154→  1154→/* ── EPUB / DOCX / TXT ── */
+   556→  1155→  1155→async function _loadJSZip(){if(window.JSZip)return window.JSZip;return new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';s.onload=()=>res(window.JSZip);s.onerror=()=>rej(new Error('No se pudo cargar JSZip'));document.head.appendChild(s);});}
+   557→  1156→  1156→async function loadEPUB(file){
+   558→  1157→  1157→  S.fileName=file.name;const ab=await file.arrayBuffer();
+   559→  1158→  1158→  const JSZip=await _loadJSZip();const zip=await JSZip.loadAsync(ab);
+   560→  1159→  1159→  const containerXml=await zip.file('META-INF/container.xml').async('text');
+   561→  1160→  1160→  const opfPath=containerXml.match(/full-path="([^"]+\.opf)"/i)?.[1];if(!opfPath)throw new Error('EPUB sin OPF');
+   562→  1161→  1161→  const opfBase=opfPath.substring(0,opfPath.lastIndexOf('/')+1);
+   563→  1162→  1162→  const opfDoc=new DOMParser().parseFromString(await zip.file(opfPath).async('text'),'application/xml');
+   564→  1163→  1163→  const manifest={};opfDoc.querySelectorAll('manifest item').forEach(item=>{manifest[item.id]={href:opfBase+item.getAttribute('href')};});
+   565→  1164→  1164→  const spine=Array.from(opfDoc.querySelectorAll('spine itemref')).map(i=>i.getAttribute('idref'));
+   566→  1165→  1165→  let allText='';
+   567→  1166→  1166→  for(const id of spine){const item=manifest[id];if(!item)continue;const f=zip.file(item.href);if(!f)continue;const html=await f.async('text');const hdoc=new DOMParser().parseFromString(html,'text/html');hdoc.querySelectorAll('script,style,nav').forEach(e=>e.remove());allText+=(hdoc.body?.textContent||'')+'\n\n';}
+   568→  1167→  1167→  S.highlights=getHighlights(file.name);S.bookmarks=getBookmarks(file.name);
+   569→  1168→  1168→  renderPlainText(allText,file.name);_afterLoad(file.name,'EPUB');
+   570→  1169→  1169→}
+   571→  1170→  1170→async function loadDOCX(file){
+   572→  1171→  1171→  S.fileName=file.name;const ab=await file.arrayBuffer();
+   573→  1172→  1172→  const JSZip=await _loadJSZip();const zip=await JSZip.loadAsync(ab);
+   574→  1173→  1173→  const wordXml=await zip.file('word/document.xml')?.async('text');if(!wordXml)throw new Error('DOCX sin document.xml');
+   575→  1174→  1174→  const wdoc=new DOMParser().parseFromString(wordXml,'application/xml');
+   576→  1175→  1175→  let text='';wdoc.querySelectorAll('p').forEach(p=>{const t=Array.from(p.querySelectorAll('t')).map(n=>n.textContent).join('');if(t.trim())text+=t.trim()+'\n\n';});
+   577→  1176→  1176→  S.highlights=getHighlights(file.name);S.bookmarks=getBookmarks(file.name);
+   578→  1177→  1177→  renderPlainText(text,file.name);_afterLoad(file.name,'DOCX');
+   579→  1178→  1178→}
+   580→  1179→  1179→async function loadTXT(file){S.fileName=file.name;const text=await file.text();S.highlights=getHighlights(file.name);S.bookmarks=getBookmarks(file.name);renderPlainText(text,file.name);_afterLoad(file.name,'TXT');}
+   581→  1180→  1180→function renderPlainText(text,filename){
+   582→  1181→  1181→  const viewer=document.getElementById('pdf-viewer');viewer.innerHTML='';S.paras=[];
+   583→  1182→  1182→  const rawParas=text.split(/\n\s*\n/).map(p=>p.replace(/\n/g,' ').replace(/\s+/g,' ').trim()).filter(p=>p.length>0);
+   584→  1183→  1183→  const pageDiv=document.createElement('div');pageDiv.className='pdf-page';
+   585→  1184→  1184→  const badge=document.createElement('div');badge.className='pg-badge';badge.textContent=filename+' · '+rawParas.length+' párrafos';pageDiv.appendChild(badge);
+   586→  1185→  1185→  rawParas.forEach(txt=>{
+   587→  1186→  1186→    const idx=S.paras.length;
+   588→  1187→  1187→    const {el,wEls,wOffsets,sEls,sentOffsets}=_buildParaEl(txt,idx);
+   589→  1188→  1188→    if(S.highlights[idx])el.classList.add('highlighted');
+   590→  1189→  1189→    if(S.bookmarks[idx]){el.classList.add('bookmarked');_addBkDot(el);}
+   591→  1190→  1190→    S.paras.push({text:txt,page:1+Math.floor(idx/20),isH:false,isF:false,el,wEls,wOffsets,sEls,sentOffsets});pageDiv.appendChild(el);
+   592→  1191→  1191→  });
+   593→  1192→  1192→  viewer.appendChild(pageDiv);applyHFvisibility();updateProgress();
+   594→  1193→  1193→}
+   595→  1194→  1194→function _afterLoad(name,info){
+   596→  1195→  1195→  document.getElementById('drop-zone').style.display='none';
+   597→  1196→  1196→  document.getElementById('pdf-viewer').style.display='block';
+   598→  1197→  1197→  document.getElementById('topbar-title').textContent=name;
+   599→  1198→  1198→  addRecent(name,0);restoreProgress(name);setupMediaSession(name);
+   600→  1199→  1199→  buildTOC();renderBookmarks();hideLoading();startSession();
+
+[showing lines 1-600 of 602; use offset=601 with limit to continue reading]
