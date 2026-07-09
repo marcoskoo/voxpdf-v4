@@ -1,7 +1,11 @@
 /**
  * VoxPDF v4 — Core Types
- * Lector con Voz + IA — 26 features
+ * Lector con Voz + GLM AI — 26 features
  */
+
+// ── AI Engine ──
+export const AI_ENGINE = 'GLM' as const;
+export const AI_MODEL = 'glm-4-flash' as const;
 
 // ── Document ──
 export interface Paragraph {

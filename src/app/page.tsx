@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useVoxPDFStore } from '@/stores/voxpdf-store';
-import { EQ_PRESETS, HEAT_COLORS, MindMapNode, Bookmark, GlossaryTerm, Flashcard } from '@/lib/voxpdf-types';
+import { EQ_PRESETS, HEAT_COLORS, MindMapNode, Bookmark, GlossaryTerm, Flashcard, AI_ENGINE, AI_MODEL } from '@/lib/voxpdf-types';
 import {
   BookOpen, Play, Pause, SkipBack, SkipForward, Square, Search, Bookmark as BookmarkIcon,
   Settings, RotateCcw, Mic, MicOff, Timer,
@@ -553,12 +553,41 @@ export default function VoxPDFv4() {
     store.setWordFrequency(freq);
   }
 
-  // ── Mind Map ──
-  function computeMindMap() {
+  // ── Mind Map (GLM-powered) ──
+  async function computeMindMap() {
+    if (!store.paragraphs.length) return;
+    try {
+      const res = await fetch('/api/mindmap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paragraphs: store.paragraphs,
+          chapters: store.chapters,
+          fileName: store.fileName,
+        }),
+      });
+      const data = await res.json();
+      if (data.mindMap && data.mindMap.children && data.mindMap.children.length > 0) {
+        // Add depth to nodes recursively
+        const addDepth = (node: MindMapNode, d: number) => {
+          node.depth = d;
+          node.children.forEach(c => addDepth(c, d + 1));
+        };
+        addDepth(data.mindMap, 0);
+        store.setMindMap(data.mindMap);
+        return;
+      }
+    } catch (e) {
+      console.error('GLM mind map error:', e);
+    }
+    // Fallback: local mind map
+    computeMindMapLocal();
+  }
+
+  function computeMindMapLocal() {
     const root: MindMapNode = { id: 'root', label: store.fileName || 'Documento', children: [], depth: 0 };
     store.chapters.forEach((ch, i) => {
       const chapterNode: MindMapNode = { id: `ch-${i}`, label: ch.title, children: [], depth: 1 };
-      // Get first few paragraphs of chapter as sub-topics
       const start = ch.startIdx;
       const end = i < store.chapters.length - 1 ? store.chapters[i + 1].startIdx : Math.min(start + 5, store.paragraphs.length);
       for (let j = start; j < Math.min(start + 3, end); j++) {
@@ -575,7 +604,6 @@ export default function VoxPDFv4() {
       root.children.push(chapterNode);
     });
     if (root.children.length === 0 && store.paragraphs.length > 0) {
-      // Fallback: group by pages
       const byPage: Record<number, string[]> = {};
       store.paragraphs.forEach(p => {
         if (!byPage[p.page]) byPage[p.page] = [];
@@ -889,13 +917,42 @@ export default function VoxPDFv4() {
     } catch {}
   }
 
-  // ── Flashcards / Anki ──
-  function generateFlashcards() {
+  // ── Flashcards / Anki (GLM-powered) ──
+  async function generateFlashcards() {
+    if (!store.paragraphs.length) {
+      toast({ title: 'Carga un documento primero', variant: 'destructive' });
+      return;
+    }
+    try {
+      toast({ title: 'GLM generando flashcards…', description: 'Un momento' });
+      const res = await fetch('/api/flashcards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paragraphs: store.paragraphs,
+          chapters: store.chapters,
+          fileName: store.fileName,
+        }),
+      });
+      const data = await res.json();
+      if (data.flashcards && data.flashcards.length) {
+        store.setFlashcards(data.flashcards);
+        toast({ title: 'Flashcards generadas con GLM', description: `${data.flashcards.length} tarjetas` });
+      } else {
+        // Fallback: simple local generation
+        generateFlashcardsLocal();
+      }
+    } catch (e) {
+      console.error('GLM flashcards error:', e);
+      generateFlashcardsLocal();
+    }
+  }
+
+  function generateFlashcardsLocal() {
     const cards: Flashcard[] = [];
     store.chapters.forEach((ch, i) => {
       const start = ch.startIdx;
       const end = i < store.chapters.length - 1 ? store.chapters[i + 1].startIdx : store.paragraphs.length;
-      // Take key sentences as flashcard fronts
       for (let j = start; j < Math.min(start + 3, end); j++) {
         const sents = splitSentences(store.paragraphs[j]?.text || '');
         sents.slice(0, 2).forEach(s => {
@@ -911,7 +968,7 @@ export default function VoxPDFv4() {
       }
     });
     store.setFlashcards(cards);
-    toast({ title: 'Flashcards generadas', description: `${cards.length} tarjetas` });
+    toast({ title: 'Flashcards generadas (local)', description: `${cards.length} tarjetas` });
   }
 
   function exportAnkiCSV() {
@@ -930,13 +987,12 @@ export default function VoxPDFv4() {
     toast({ title: 'CSV exportado', description: 'Compatible con Anki' });
   }
 
-  // ── Translation ──
+  // ── Translation (GLM-powered) ──
   async function translateText(text: string): Promise<string> {
     const cached = store.translationCache[text];
     if (cached) return cached;
-    // Use z-ai-web-dev-sdk via API route
     try {
-      const res = await fetch(`/api/translate?XTransformPort=3000`, {
+      const res = await fetch(`/api/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, source: store.translation.sourceLang, target: store.translation.targetLang }),
@@ -946,17 +1002,19 @@ export default function VoxPDFv4() {
         store.setTranslationCache(text, data.translation);
         return data.translation;
       }
-    } catch {}
+    } catch (e) {
+      console.error('GLM translation error:', e);
+    }
     return `[Traducción no disponible]`;
   }
 
-  // ── Glossary ──
+  // ── Glossary (GLM-powered) ──
   function handleTextSelection() {
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed) return;
     const text = sel.toString().trim();
     if (text.length < 2 || text.length > 50) return;
-    // Check glossary
+    // Check local glossary first
     const existing = store.glossary.find(g => g.term.toLowerCase() === text.toLowerCase());
     if (existing) {
       const range = sel.getRangeAt(0);
@@ -966,20 +1024,65 @@ export default function VoxPDFv4() {
       setGlossaryPopupPos({ x: rect.left, y: rect.bottom });
       setShowGlossaryPopup(true);
     } else {
-      // Offer to add to glossary
+      // Use GLM to define the term
       const range = sel.getRangeAt(0);
       const rect = range.getBoundingClientRect();
       setGlossaryPopupTerm(text);
-      setGlossaryPopupDef('Término no definido. Click + para añadir.');
+      setGlossaryPopupDef('Consultando GLM…');
       setGlossaryPopupPos({ x: rect.left, y: rect.bottom });
       setShowGlossaryPopup(true);
+      // Fetch definition from GLM
+      fetch('/api/glossary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ term: text, context: store.paragraphs[store.currentParaIdx]?.text || '' }),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.definition) {
+            setGlossaryPopupDef(data.definition);
+          } else {
+            setGlossaryPopupDef('Término no definido. Click + para añadir.');
+          }
+        })
+        .catch(() => {
+          setGlossaryPopupDef('Término no definido. Click + para añadir.');
+        });
     }
   }
 
   function addToGlossary() {
-    store.addGlossaryTerm({ term: glossaryPopupTerm, definition: '', source: store.fileName });
+    store.addGlossaryTerm({ term: glossaryPopupTerm, definition: glossaryPopupDef, source: store.fileName });
     setShowGlossaryPopup(false);
     toast({ title: 'Término añadido al glosario' });
+  }
+
+  // ── Summarize (GLM-powered) ──
+  async function summarizeDocument(mode: 'brief' | 'detailed' | 'bullet' | 'academic' = 'brief') {
+    if (!store.paragraphs.length) {
+      toast({ title: 'Carga un documento primero', variant: 'destructive' });
+      return;
+    }
+    try {
+      toast({ title: 'GLM resumiendo…', description: 'Un momento' });
+      const text = store.paragraphs.slice(0, 50).map(p => p.text).join('\n\n');
+      const res = await fetch('/api/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, mode }),
+      });
+      const data = await res.json();
+      if (data.summary) {
+        toast({ title: 'Resumen con GLM', description: data.summary.slice(0, 100) + '…' });
+        // Save to parallel notes at current position
+        setParallelNotes({ ...parallelNotes, [store.currentParaIdx]: `📋 Resumen: ${data.summary}` });
+        return data.summary;
+      }
+    } catch (e) {
+      console.error('GLM summarize error:', e);
+    }
+    toast({ title: 'Error', description: 'No se pudo resumir', variant: 'destructive' });
+    return '';
   }
 
   // ── Export Markdown ──
@@ -1052,7 +1155,7 @@ export default function VoxPDFv4() {
     input.click();
   }
 
-  // ── Cloud Sync (simplified UI - Supabase placeholder) ──
+  // ── Cloud Sync (GLM-compatible - Supabase placeholder) ──
   function handleGoogleLogin() {
     // In production, this would use Supabase Auth with Google provider
     store.setLoggedIn(true, 'Usuario Demo', 'demo@voxpdf.com');
@@ -1221,7 +1324,7 @@ export default function VoxPDFv4() {
             <TabsContent value="tools" className="flex-1 overflow-y-auto p-2 m-0 space-y-1">
               {/* Flashcards */}
               <div className="p-2 rounded-lg border" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Flashcards → Anki</div>
+                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Flashcards → Anki (GLM)</div>
                 <div className="flex gap-1">
                   <Button variant="outline" size="sm" className="text-[10px] h-6 flex-1" onClick={generateFlashcards}>
                     <Sparkles className="h-3 w-3 mr-1" /> Generar
@@ -1233,9 +1336,25 @@ export default function VoxPDFv4() {
                 {store.flashcards.length > 0 && <div className="text-[10px] opacity-40 mt-1">{store.flashcards.length} tarjetas</div>}
               </div>
 
-              {/* Translation */}
+              {/* Summarize */}
               <div className="p-2 rounded-lg border" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Traducción al vuelo</div>
+                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Resumir con GLM</div>
+                <div className="flex gap-1">
+                  <Button variant="outline" size="sm" className="text-[10px] h-6 flex-1" onClick={() => summarizeDocument('brief')}>
+                    <Sparkles className="h-3 w-3 mr-1" /> Breve
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-[10px] h-6 flex-1" onClick={() => summarizeDocument('detailed')}>
+                    <Sparkles className="h-3 w-3 mr-1" /> Detallado
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-[10px] h-6 flex-1" onClick={() => summarizeDocument('bullet')}>
+                    <Sparkles className="h-3 w-3 mr-1" /> Puntos
+                  </Button>
+                </div>
+              </div>
+
+              {/* Translation (GLM) */}
+              <div className="p-2 rounded-lg border" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Traducción al vuelo (GLM)</div>
                 <div className="flex items-center gap-1 mb-1">
                   <Globe className="h-3 w-3 opacity-40" />
                   <Select value={store.translation.targetLang} onValueChange={(v) => store.setTranslation({ targetLang: v })}>
@@ -1257,7 +1376,7 @@ export default function VoxPDFv4() {
 
               {/* Mind Map */}
               <div className="p-2 rounded-lg border" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Mapa mental</div>
+                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Mapa mental (GLM)</div>
                 <Button variant="outline" size="sm" className="text-[10px] h-6 w-full" onClick={() => setShowMindMap(!showMindMap)}>
                   <Brain className="h-3 w-3 mr-1" /> {showMindMap ? 'Ocultar' : 'Mostrar'} mapa
                 </Button>
@@ -1637,7 +1756,7 @@ export default function VoxPDFv4() {
                 <BookOpen className="h-16 w-16 opacity-10" />
                 <div className="text-2xl font-bold tracking-tight opacity-30" style={{ fontFamily: 'Syne, sans-serif' }}>VoxPDF v4</div>
                 <div className="text-[12px] opacity-30 text-center max-w-[260px] leading-relaxed">
-                  Lee PDF, EPUB, DOCX, CBZ en voz alta. OCR, resúmenes con IA, speed reading RSVP, traducción, glosario, mapa mental, Pomodoro y más.
+                  Lee PDF, EPUB, DOCX, CBZ en voz alta. OCR, resúmenes con GLM, speed reading RSVP, traducción, glosario, mapa mental, Pomodoro y más.
                 </div>
                 <div className={`border-2 border-dashed rounded-xl p-8 cursor-pointer w-full max-w-[320px] text-center transition-colors ${isDragging ? 'border-opacity-100' : 'border-opacity-20'}`}
                   style={{ borderColor: isDragging ? accentColor : 'rgba(255,255,255,0.13)', background: isDragging ? `${accentColor}10` : 'transparent' }}
@@ -1699,6 +1818,8 @@ export default function VoxPDFv4() {
                         <ContextMenuItem onClick={() => startReading(p.origIdx)}><Play className="h-3 w-3 mr-2" />Leer desde aquí</ContextMenuItem>
                         <ContextMenuItem onClick={() => { setBookmarkParaIdx(p.origIdx); setShowBookmarkModal(true); }}><BookmarkIcon className="h-3 w-3 mr-2" />Marcador</ContextMenuItem>
                         <ContextMenuItem onClick={() => { navigator.clipboard.writeText(p.text); toast({ title: 'Copiado' }); }}><Copy className="h-3 w-3 mr-2" />Copiar</ContextMenuItem>
+                        <ContextMenuItem onClick={() => translateText(p.text).then(t => { store.setTranslationCache(p.text, t); toast({ title: 'Traducido' }); })}><Languages className="h-3 w-3 mr-2" />Traducir</ContextMenuItem>
+                        <ContextMenuItem onClick={() => summarizeDocument('brief')}><Sparkles className="h-3 w-3 mr-2" />Resumir con GLM</ContextMenuItem>
                       </ContextMenuContent>
                     </ContextMenu>
                   ))}
@@ -1783,6 +1904,9 @@ export default function VoxPDFv4() {
                           toast({ title: 'Traducido' });
                         })}>
                           <Languages className="h-3 w-3 mr-2" />Traducir
+                        </ContextMenuItem>
+                        <ContextMenuItem onClick={() => summarizeDocument('brief')}>
+                          <Sparkles className="h-3 w-3 mr-2" />Resumir con GLM
                         </ContextMenuItem>
                       </ContextMenuContent>
                     </ContextMenu>

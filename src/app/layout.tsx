@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VoxPDF v4 — Lector con Voz + IA",
-  description: "Lee PDF, EPUB, DOCX, CBZ en voz alta. 26 features: TTS con pausas, ecualizador, control por voz, traducción, glosario, mapa mental, flashcards Anki, Pomodoro, teleprompter, heat map, e-ink, lazy rendering, cloud sync, sala grupal, y más.",
-  keywords: ["PDF", "TTS", "reader", "e-book", "flashcards", "Anki", "translation", "glossary", "mind map", "Pomodoro"],
+  title: "VoxPDF v4 — Lector con Voz + GLM",
+  description: "Lee PDF, EPUB, DOCX, CBZ en voz alta. Powered by GLM AI: traducción, resúmenes, glosario, mapa mental, flashcards Anki, TTS con pausas, ecualizador, control por voz, Pomodoro, teleprompter, heat map, e-ink, lazy rendering, cloud sync, sala grupal, y más.",
+  keywords: ["PDF", "TTS", "reader", "e-book", "GLM", "AI", "flashcards", "Anki", "translation", "glossary", "mind map", "Pomodoro"],
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>",
   },
