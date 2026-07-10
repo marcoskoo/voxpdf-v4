@@ -310,19 +310,22 @@ export default function VoxPDFv4() {
     }
     const ab = await file.arrayBuffer();
     // Try Web Worker first for non-blocking parsing
+    // Note: we slice() the buffer so the transfer doesn't detach the original,
+    // keeping it available for the main-thread fallback.
     try {
       const worker = new Worker(new URL('@/workers/pdf-worker.ts', import.meta.url));
+      const workerAb = ab.slice(0); // copy for transfer
       const result = await new Promise<any>((resolve, reject) => {
         worker.onmessage = (e) => {
           if (e.data.type === 'done') { resolve(e.data.data); worker.terminate(); }
           else if (e.data.type === 'error') { reject(new Error(e.data.error)); worker.terminate(); }
         };
-        worker.postMessage({ type: 'parse', data: ab }, [ab]);
+        worker.postMessage({ type: 'parse', data: workerAb }, [workerAb]);
       });
       store.setParagraphs(result.paragraphs);
       store.setTotalPages(result.totalPages);
     } catch {
-      // Fallback to main thread
+      // Fallback to main thread — ab is still usable because we sliced it
       const doc = await pdfjsLib.getDocument({ data: ab }).promise;
       store.setTotalPages(doc.numPages);
       await extractRenderPDF(doc);
