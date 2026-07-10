@@ -63,3 +63,4 @@ upload/
 examples/
 scripts/
 tool-results/
+.env*
