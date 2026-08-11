@@ -207,3 +207,173 @@ export async function glmSummarize(text: string, mode: 'brief' | 'detailed' | 'b
 }
 
 export { getZAI };
+
+// ── Q&A Chat with Document ──
+export async function glmQA(question: string, context: string, history: ChatMessage[] = []): Promise<string> {
+  const zai = await getZAI();
+  const systemPrompt = `You are an intelligent document assistant. Answer questions based ONLY on the provided document context. If the answer is not in the document, say so clearly. Be concise but thorough. Cite specific sections when possible. Write in the same language as the question.`;
+  const messages: ChatMessage[] = [
+    { role: 'system', content: systemPrompt },
+    ...history.slice(-6),
+    { role: 'user', content: `Document context:\n${context.slice(0, 6000)}\n\nQuestion: ${question}` },
+  ];
+  const result = await zai.chat.completions.create({
+    model: 'glm-4-flash',
+    messages,
+    stream: false,
+  });
+  return result?.choices?.[0]?.message?.content || result?.content || '';
+}
+
+// ── Quiz Generation ──
+export async function glmQuiz(paragraphs: any[], chapters: any[], fileName: string): Promise<any[]> {
+  const zai = await getZAI();
+  const docContent = paragraphs.slice(0, 30).map((p: any) => p.text).join('\n');
+  const result = await zai.chat.completions.create({
+    model: 'glm-4-flash',
+    messages: [
+      { role: 'system', content: 'You are a quiz generator. Create multiple-choice questions from the given document. Return ONLY a JSON array of objects with: "question" (string), "options" (array of 4 strings), "correct" (index of correct option, 0-3), "explanation" (string). Generate 5-10 questions covering key concepts. No other text.' },
+      { role: 'user', content: `Document: "${fileName}"\n\n${docContent}` },
+    ],
+    stream: false,
+  });
+  const raw = result?.choices?.[0]?.message?.content || result?.content || '[]';
+  try {
+    return JSON.parse(raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim());
+  } catch { return []; }
+}
+
+// ── Citations Auto-detect ──
+export async function glmCitations(text: string): Promise<any[]> {
+  const zai = await getZAI();
+  const result = await zai.chat.completions.create({
+    model: 'glm-4-flash',
+    messages: [
+      { role: 'system', content: 'You are a citation detection and formatting assistant. Find all citations/references in the text. Return ONLY a JSON array of objects: { "original" (the original citation text), "apa" (APA format), "mla" (MLA format), "chicago" (Chicago format), "type" (book/journal/web/other) }. If no citations found, return empty array. No other text.' },
+      { role: 'user', content: text.slice(0, 4000) },
+    ],
+    stream: false,
+  });
+  const raw = result?.choices?.[0]?.message?.content || result?.content || '[]';
+  try {
+    return JSON.parse(raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim());
+  } catch { return []; }
+}
+
+// ── Section Summary ──
+export async function glmSectionSummary(sections: { title: string; content: string }[]): Promise<{ title: string; summary: string }[]> {
+  const zai = await getZAI();
+  const summaries: { title: string; summary: string }[] = [];
+  for (const section of sections.slice(0, 20)) {
+    try {
+      const result = await zai.chat.completions.create({
+        model: 'glm-4-flash',
+        messages: [
+          { role: 'system', content: 'Summarize this section in 2-3 sentences. Write in the same language as the text. Return ONLY the summary.' },
+          { role: 'user', content: `Section: ${section.title}\n\n${section.content.slice(0, 2000)}` },
+        ],
+        stream: false,
+      });
+      summaries.push({
+        title: section.title,
+        summary: (result?.choices?.[0]?.message?.content || result?.content || '').trim(),
+      });
+    } catch {
+      summaries.push({ title: section.title, summary: 'Error generating summary' });
+    }
+  }
+  return summaries;
+}
+
+// ── Sentiment Analysis ──
+export async function glmSentiment(sections: { title: string; content: string }[]): Promise<{ title: string; sentiment: string; score: number }[]> {
+  const zai = await getZAI();
+  const results: { title: string; sentiment: string; score: number }[] = [];
+  for (const section of sections.slice(0, 15)) {
+    try {
+      const result = await zai.chat.completions.create({
+        model: 'glm-4-flash',
+        messages: [
+          { role: 'system', content: 'Analyze the sentiment/emotional tone of the text. Return ONLY a JSON object: { "sentiment": "positive"|"negative"|"neutral"|"mixed", "score": -1 to 1 }. No other text.' },
+          { role: 'user', content: section.content.slice(0, 1500) },
+        ],
+        stream: false,
+      });
+      const raw = (result?.choices?.[0]?.message?.content || result?.content || '{}').trim();
+      const parsed = JSON.parse(raw.replace(/```json\n?/g, '').replace(/```\n?/g, ''));
+      results.push({ title: section.title, sentiment: parsed.sentiment || 'neutral', score: parsed.score || 0 });
+    } catch {
+      results.push({ title: section.title, sentiment: 'neutral', score: 0 });
+    }
+  }
+  return results;
+}
+
+// ── Language Detection ──
+export async function glmDetectLanguage(text: string): Promise<{ language: string; code: string; confidence: number }> {
+  const zai = await getZAI();
+  const result = await zai.chat.completions.create({
+    model: 'glm-4-flash',
+    messages: [
+      { role: 'system', content: 'Detect the language of the text. Return ONLY a JSON object: { "language": "full name", "code": "ISO 639-1 code", "confidence": 0-1 }. No other text.' },
+      { role: 'user', content: text.slice(0, 500) },
+    ],
+    stream: false,
+  });
+  try {
+    const raw = (result?.choices?.[0]?.message?.content || result?.content || '{}').trim();
+    return JSON.parse(raw.replace(/```json\n?/g, '').replace(/```\n?/g, ''));
+  } catch { return { language: 'English', code: 'en', confidence: 0.5 }; }
+}
+
+// ── Extract Tables ──
+export async function glmExtractTables(text: string): Promise<any[]> {
+  const zai = await getZAI();
+  const result = await zai.chat.completions.create({
+    model: 'glm-4-flash',
+    messages: [
+      { role: 'system', content: 'Extract any tabular data from the text. Return ONLY a JSON array of tables: [{ "headers": ["col1","col2",...], "rows": [["val1","val2",...],...], "caption": "table description" }]. If no tables found, return empty array. No other text.' },
+      { role: 'user', content: text.slice(0, 6000) },
+    ],
+    stream: false,
+  });
+  const raw = result?.choices?.[0]?.message?.content || result?.content || '[]';
+  try {
+    return JSON.parse(raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim());
+  } catch { return []; }
+}
+
+// ── Web Clip Summary ──
+export async function glmWebClip(html: string, url: string): Promise<{ title: string; content: string; summary: string }> {
+  const zai = await getZAI();
+  const plainText = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 8000);
+  const result = await zai.chat.completions.create({
+    model: 'glm-4-flash',
+    messages: [
+      { role: 'system', content: 'You are a web article extractor. Given the text content of a web page, extract: 1) The article title 2) The main article content (clean, no navigation/ads) 3) A brief 2-sentence summary. Return ONLY a JSON object: { "title": "", "content": "", "summary": "" }. No other text.' },
+      { role: 'user', content: `URL: ${url}\n\n${plainText}` },
+    ],
+    stream: false,
+  });
+  try {
+    const raw = (result?.choices?.[0]?.message?.content || result?.content || '{}').trim();
+    return JSON.parse(raw.replace(/```json\n?/g, '').replace(/```\n?/g, ''));
+  } catch { return { title: url, content: plainText.slice(0, 3000), summary: '' }; }
+}
+
+// ── Document Comparison ──
+export async function glmCompare(text1: string, text2: string): Promise<{ similarities: string[]; differences: string[]; summary: string }> {
+  const zai = await getZAI();
+  const result = await zai.chat.completions.create({
+    model: 'glm-4-flash',
+    messages: [
+      { role: 'system', content: 'Compare two documents. Return ONLY a JSON object: { "similarities": ["point1",...], "differences": ["diff1",...], "summary": "overall comparison in 2-3 sentences" }. List 3-5 key similarities and 3-5 key differences. No other text.' },
+      { role: 'user', content: `Document A:\n${text1.slice(0, 3000)}\n\nDocument B:\n${text2.slice(0, 3000)}` },
+    ],
+    stream: false,
+  });
+  try {
+    const raw = (result?.choices?.[0]?.message?.content || result?.content || '{}').trim();
+    return JSON.parse(raw.replace(/```json\n?/g, '').replace(/```\n?/g, ''));
+  } catch { return { similarities: [], differences: [], summary: 'Comparison failed' }; }
+}

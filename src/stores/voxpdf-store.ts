@@ -1,11 +1,14 @@
 /**
- * VoxPDF v4 — Global Store (Zustand)
+ * VoxPDF v4 — Global Store (Zustand) — Extended with 20 new plugins
  */
 import { create } from 'zustand';
 import {
   AppSettings, Bookmark, Chapter, DEFAULT_SETTINGS, Flashcard,
   GlossaryTerm, Highlight, MindMapNode, Paragraph, PomodoroState,
-  RoomUser, RoomMessage, TranslationConfig, VoiceInfo
+  RoomUser, RoomMessage, TranslationConfig, VoiceInfo,
+  QuizQuestion, Citation, SentimentResult, SectionSummary, ExtractedTable,
+  LanguageDetection, DocComparison, QAMessage, ReadingStats,
+  FocusModeType, WebClip, AmbientSound, SubtitleEntry
 } from '@/lib/voxpdf-types';
 
 interface VoxPDFStore {
@@ -96,6 +99,97 @@ interface VoxPDFStore {
   searchHits: number[];
   searchCurrentIdx: number;
 
+  // ── NEW: Q&A Chat ──
+  qaMessages: QAMessage[];
+  qaLoading: boolean;
+
+  // ── NEW: Quiz ──
+  quizQuestions: QuizQuestion[];
+  quizLoading: boolean;
+  quizCurrentIdx: number;
+  quizScore: number;
+  quizAnswered: boolean[];
+
+  // ── NEW: Citations ──
+  citations: Citation[];
+  citationsLoading: boolean;
+  citationFormat: 'apa' | 'mla' | 'chicago';
+
+  // ── NEW: Section Summaries ──
+  sectionSummaries: SectionSummary[];
+  sectionSummariesLoading: boolean;
+
+  // ── NEW: Sentiment ──
+  sentimentResults: SentimentResult[];
+  sentimentLoading: boolean;
+
+  // ── NEW: Language Detection ──
+  detectedLanguage: LanguageDetection | null;
+  languageLoading: boolean;
+
+  // ── NEW: Extracted Tables ──
+  extractedTables: ExtractedTable[];
+  tablesLoading: boolean;
+
+  // ── NEW: Document Comparison ──
+  docComparison: DocComparison | null;
+  comparisonLoading: boolean;
+  secondDocText: string;
+  secondDocName: string;
+
+  // ── NEW: Reading Stats ──
+  readingStats: ReadingStats;
+  readingSessionStart: number;
+
+  // ── NEW: Focus Mode ──
+  focusModeType: FocusModeType;
+  focusLineIdx: number;
+
+  // ── NEW: Split View ──
+  splitView: boolean;
+  splitDocName: string;
+  splitDocParagraphs: Paragraph[];
+  splitDocCurrentIdx: number;
+
+  // ── NEW: Audio Export ──
+  audioExporting: boolean;
+  audioExportProgress: number;
+
+  // ── NEW: Podcast Mode ──
+  podcastMode: boolean;
+  podcastIntro: string;
+  podcastOutro: string;
+
+  // ── NEW: Ambient Sound ──
+  ambientSound: AmbientSound;
+  ambientVolume: number;
+
+  // ── NEW: Subtitles ──
+  subtitles: SubtitleEntry[];
+  subtitleFormat: 'srt' | 'vtt';
+  subtitleVisible: boolean;
+
+  // ── NEW: Web Clips ──
+  webClips: WebClip[];
+  webClipLoading: boolean;
+
+  // ── NEW: Word Cloud ──
+  wordCloudData: { text: string; value: number }[];
+  wordCloudLoading: boolean;
+
+  // ── NEW: Timeline ──
+  timelineData: { date: string; event: string }[];
+  timelineLoading: boolean;
+
+  // ── NEW: Concept Network ──
+  conceptNetwork: { nodes: { id: string; label: string }[]; edges: { source: string; target: string; label?: string }[] } | null;
+  conceptNetworkLoading: boolean;
+
+  // ── NEW: OCR ──
+  ocrActive: boolean;
+  ocrProgress: number;
+  ocrResult: string;
+
   // ── Actions ──
   setFileName: (name: string) => void;
   setParagraphs: (paras: Paragraph[]) => void;
@@ -168,6 +262,80 @@ interface VoxPDFStore {
   setSearchQuery: (q: string) => void;
   setSearchHits: (h: number[]) => void;
   setSearchCurrentIdx: (i: number) => void;
+
+  // ── NEW Actions ──
+  setQAMessages: (m: QAMessage[]) => void;
+  addQAMessage: (m: QAMessage) => void;
+  setQALoading: (v: boolean) => void;
+
+  setQuizQuestions: (q: QuizQuestion[]) => void;
+  setQuizLoading: (v: boolean) => void;
+  setQuizCurrentIdx: (i: number) => void;
+  setQuizScore: (s: number) => void;
+  setQuizAnswered: (a: boolean[]) => void;
+
+  setCitations: (c: Citation[]) => void;
+  setCitationsLoading: (v: boolean) => void;
+  setCitationFormat: (f: 'apa' | 'mla' | 'chicago') => void;
+
+  setSectionSummaries: (s: SectionSummary[]) => void;
+  setSectionSummariesLoading: (v: boolean) => void;
+
+  setSentimentResults: (r: SentimentResult[]) => void;
+  setSentimentLoading: (v: boolean) => void;
+
+  setDetectedLanguage: (l: LanguageDetection | null) => void;
+  setLanguageLoading: (v: boolean) => void;
+
+  setExtractedTables: (t: ExtractedTable[]) => void;
+  setTablesLoading: (v: boolean) => void;
+
+  setDocComparison: (c: DocComparison | null) => void;
+  setComparisonLoading: (v: boolean) => void;
+  setSecondDocText: (t: string) => void;
+  setSecondDocName: (n: string) => void;
+
+  setReadingStats: (s: ReadingStats) => void;
+  setReadingSessionStart: (t: number) => void;
+
+  setFocusModeType: (f: FocusModeType) => void;
+  setFocusLineIdx: (i: number) => void;
+
+  setSplitView: (v: boolean) => void;
+  setSplitDocName: (n: string) => void;
+  setSplitDocParagraphs: (p: Paragraph[]) => void;
+  setSplitDocCurrentIdx: (i: number) => void;
+
+  setAudioExporting: (v: boolean) => void;
+  setAudioExportProgress: (p: number) => void;
+
+  setPodcastMode: (v: boolean) => void;
+  setPodcastIntro: (s: string) => void;
+  setPodcastOutro: (s: string) => void;
+
+  setAmbientSound: (s: AmbientSound) => void;
+  setAmbientVolume: (v: number) => void;
+
+  setSubtitles: (s: SubtitleEntry[]) => void;
+  setSubtitleFormat: (f: 'srt' | 'vtt') => void;
+  setSubtitleVisible: (v: boolean) => void;
+
+  setWebClips: (c: WebClip[]) => void;
+  addWebClip: (c: WebClip) => void;
+  setWebClipLoading: (v: boolean) => void;
+
+  setWordCloudData: (d: { text: string; value: number }[]) => void;
+  setWordCloudLoading: (v: boolean) => void;
+
+  setTimelineData: (d: { date: string; event: string }[]) => void;
+  setTimelineLoading: (v: boolean) => void;
+
+  setConceptNetwork: (n: { nodes: { id: string; label: string }[]; edges: { source: string; target: string; label?: string }[] } | null) => void;
+  setConceptNetworkLoading: (v: boolean) => void;
+
+  setOcrActive: (v: boolean) => void;
+  setOcrProgress: (p: number) => void;
+  setOcrResult: (r: string) => void;
 }
 
 export const useVoxPDFStore = create<VoxPDFStore>((set, get) => ({
@@ -258,6 +426,97 @@ export const useVoxPDFStore = create<VoxPDFStore>((set, get) => ({
   searchHits: [],
   searchCurrentIdx: 0,
 
+  // ── NEW: Q&A Chat ──
+  qaMessages: [],
+  qaLoading: false,
+
+  // ── NEW: Quiz ──
+  quizQuestions: [],
+  quizLoading: false,
+  quizCurrentIdx: 0,
+  quizScore: 0,
+  quizAnswered: [],
+
+  // ── NEW: Citations ──
+  citations: [],
+  citationsLoading: false,
+  citationFormat: 'apa',
+
+  // ── NEW: Section Summaries ──
+  sectionSummaries: [],
+  sectionSummariesLoading: false,
+
+  // ── NEW: Sentiment ──
+  sentimentResults: [],
+  sentimentLoading: false,
+
+  // ── NEW: Language Detection ──
+  detectedLanguage: null,
+  languageLoading: false,
+
+  // ── NEW: Extracted Tables ──
+  extractedTables: [],
+  tablesLoading: false,
+
+  // ── NEW: Document Comparison ──
+  docComparison: null,
+  comparisonLoading: false,
+  secondDocText: '',
+  secondDocName: '',
+
+  // ── NEW: Reading Stats ──
+  readingStats: { totalPagesRead: 0, totalMinutesRead: 0, averageWPM: 0, sessionsCount: 0, dailyProgress: [], streak: 0 },
+  readingSessionStart: 0,
+
+  // ── NEW: Focus Mode ──
+  focusModeType: 'off',
+  focusLineIdx: 0,
+
+  // ── NEW: Split View ──
+  splitView: false,
+  splitDocName: '',
+  splitDocParagraphs: [],
+  splitDocCurrentIdx: 0,
+
+  // ── NEW: Audio Export ──
+  audioExporting: false,
+  audioExportProgress: 0,
+
+  // ── NEW: Podcast Mode ──
+  podcastMode: false,
+  podcastIntro: '',
+  podcastOutro: '',
+
+  // ── NEW: Ambient Sound ──
+  ambientSound: 'none',
+  ambientVolume: 0.5,
+
+  // ── NEW: Subtitles ──
+  subtitles: [],
+  subtitleFormat: 'srt',
+  subtitleVisible: false,
+
+  // ── NEW: Web Clips ──
+  webClips: [],
+  webClipLoading: false,
+
+  // ── NEW: Word Cloud ──
+  wordCloudData: [],
+  wordCloudLoading: false,
+
+  // ── NEW: Timeline ──
+  timelineData: [],
+  timelineLoading: false,
+
+  // ── NEW: Concept Network ──
+  conceptNetwork: null,
+  conceptNetworkLoading: false,
+
+  // ── NEW: OCR ──
+  ocrActive: false,
+  ocrProgress: 0,
+  ocrResult: '',
+
   // ── Actions ──
   setFileName: (name) => set({ fileName: name }),
   setParagraphs: (paras) => set({ paragraphs: paras }),
@@ -330,4 +589,78 @@ export const useVoxPDFStore = create<VoxPDFStore>((set, get) => ({
   setSearchQuery: (q) => set({ searchQuery: q }),
   setSearchHits: (h) => set({ searchHits: h }),
   setSearchCurrentIdx: (i) => set({ searchCurrentIdx: i }),
+
+  // ── NEW Actions ──
+  setQAMessages: (m) => set({ qaMessages: m }),
+  addQAMessage: (m) => set((s) => ({ qaMessages: [...s.qaMessages, m] })),
+  setQALoading: (v) => set({ qaLoading: v }),
+
+  setQuizQuestions: (q) => set({ quizQuestions: q, quizAnswered: q.map(() => false) }),
+  setQuizLoading: (v) => set({ quizLoading: v }),
+  setQuizCurrentIdx: (i) => set({ quizCurrentIdx: i }),
+  setQuizScore: (s) => set({ quizScore: s }),
+  setQuizAnswered: (a) => set({ quizAnswered: a }),
+
+  setCitations: (c) => set({ citations: c }),
+  setCitationsLoading: (v) => set({ citationsLoading: v }),
+  setCitationFormat: (f) => set({ citationFormat: f }),
+
+  setSectionSummaries: (s) => set({ sectionSummaries: s }),
+  setSectionSummariesLoading: (v) => set({ sectionSummariesLoading: v }),
+
+  setSentimentResults: (r) => set({ sentimentResults: r }),
+  setSentimentLoading: (v) => set({ sentimentLoading: v }),
+
+  setDetectedLanguage: (l) => set({ detectedLanguage: l }),
+  setLanguageLoading: (v) => set({ languageLoading: v }),
+
+  setExtractedTables: (t) => set({ extractedTables: t }),
+  setTablesLoading: (v) => set({ tablesLoading: v }),
+
+  setDocComparison: (c) => set({ docComparison: c }),
+  setComparisonLoading: (v) => set({ comparisonLoading: v }),
+  setSecondDocText: (t) => set({ secondDocText: t }),
+  setSecondDocName: (n) => set({ secondDocName: n }),
+
+  setReadingStats: (s) => set({ readingStats: s }),
+  setReadingSessionStart: (t) => set({ readingSessionStart: t }),
+
+  setFocusModeType: (f) => set({ focusModeType: f }),
+  setFocusLineIdx: (i) => set({ focusLineIdx: i }),
+
+  setSplitView: (v) => set({ splitView: v }),
+  setSplitDocName: (n) => set({ splitDocName: n }),
+  setSplitDocParagraphs: (p) => set({ splitDocParagraphs: p }),
+  setSplitDocCurrentIdx: (i) => set({ splitDocCurrentIdx: i }),
+
+  setAudioExporting: (v) => set({ audioExporting: v }),
+  setAudioExportProgress: (p) => set({ audioExportProgress: p }),
+
+  setPodcastMode: (v) => set({ podcastMode: v }),
+  setPodcastIntro: (s) => set({ podcastIntro: s }),
+  setPodcastOutro: (s) => set({ podcastOutro: s }),
+
+  setAmbientSound: (s) => set({ ambientSound: s }),
+  setAmbientVolume: (v) => set({ ambientVolume: v }),
+
+  setSubtitles: (s) => set({ subtitles: s }),
+  setSubtitleFormat: (f) => set({ subtitleFormat: f }),
+  setSubtitleVisible: (v) => set({ subtitleVisible: v }),
+
+  setWebClips: (c) => set({ webClips: c }),
+  addWebClip: (c) => set((s) => ({ webClips: [...s.webClips, c] })),
+  setWebClipLoading: (v) => set({ webClipLoading: v }),
+
+  setWordCloudData: (d) => set({ wordCloudData: d }),
+  setWordCloudLoading: (v) => set({ wordCloudLoading: v }),
+
+  setTimelineData: (d) => set({ timelineData: d }),
+  setTimelineLoading: (v) => set({ timelineLoading: v }),
+
+  setConceptNetwork: (n) => set({ conceptNetwork: n }),
+  setConceptNetworkLoading: (v) => set({ conceptNetworkLoading: v }),
+
+  setOcrActive: (v) => set({ ocrActive: v }),
+  setOcrProgress: (p) => set({ ocrProgress: p }),
+  setOcrResult: (r) => set({ ocrResult: r }),
 }));

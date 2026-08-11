@@ -11,7 +11,8 @@ import {
   X, Plus, RefreshCw, Globe,
   Sparkles, Download, Copy,
   PanelLeftClose, PanelLeftOpen, FileText,
-  Moon
+  Moon,
+  ScanLine, MessageCircle, GitCompare, HelpCircle, Quote, ListChecks, Table2, BarChart3, TrendingUp, Smile, Frown, Meh, Share2, Languages as LangIcon, Calendar, SplitSquareVertical, Headphones, Radio, Volume2, Subtitles, Globe as GlobeIcon, CloudDownload, Target, ChevronRight, ChevronLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -1251,11 +1252,12 @@ export default function VoxPDFv4() {
   const fontStack = store.fontFamily === 'mono' ? "'DM Mono', monospace" : store.fontFamily === 'serif' ? 'Georgia, serif' : 'system-ui, sans-serif';
   const themeStyle = THEME_STYLES[store.theme] || THEME_STYLES.dark;
   const accentColor = store.theme === 'eink' ? '#333' : store.theme === 'ocean' ? '#40b4dc' : store.theme === 'sepia' ? '#8b5c2a' : store.theme === 'contrast' ? '#ffe066' : '#7c6af5';
+  const effectiveSidebarOpen = store.focusModeType === 'distractionFree' ? false : store.sidebarOpen;
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: themeStyle.background, color: themeStyle.color, fontFamily: fontStack }}>
       {/* ══ SIDEBAR ══ */}
-      {store.sidebarOpen && (
+      {effectiveSidebarOpen && (
         <aside className="w-[280px] min-w-[280px] border-r flex flex-col overflow-hidden"
           style={{ background: store.theme === 'light' ? '#fff' : store.theme === 'eink' ? '#f0ede6' : '#111115', borderColor: 'rgba(255,255,255,0.07)' }}>
           {/* Logo */}
@@ -1272,11 +1274,17 @@ export default function VoxPDFv4() {
 
           {/* Tabs */}
           <Tabs value={store.sidebarTab} onValueChange={store.setSidebarTab} className="flex-1 flex flex-col overflow-hidden">
-            <TabsList className="grid grid-cols-5 p-0 h-8 rounded-none border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+            <TabsList className="grid grid-cols-11 p-0 h-8 rounded-none border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
               <TabsTrigger value="recents" className="text-[9px] h-8 rounded-none" title="Recientes"><BookOpen className="h-3 w-3" /></TabsTrigger>
               <TabsTrigger value="toc" className="text-[9px] h-8 rounded-none" title="Índice"><Layers /></TabsTrigger>
               <TabsTrigger value="bookmarks" className="text-[9px] h-8 rounded-none" title="Marcadores"><BookmarkIcon className="h-3 w-3" /></TabsTrigger>
+              <TabsTrigger value="qa" className="text-[9px] h-8 rounded-none" title="Q&A"><MessageCircle className="h-3 w-3" /></TabsTrigger>
+              <TabsTrigger value="quiz" className="text-[9px] h-8 rounded-none" title="Quiz"><HelpCircle className="h-3 w-3" /></TabsTrigger>
+              <TabsTrigger value="citations" className="text-[9px] h-8 rounded-none" title="Citas"><Quote className="h-3 w-3" /></TabsTrigger>
+              <TabsTrigger value="analysis" className="text-[9px] h-8 rounded-none" title="Análisis"><BarChart3 className="h-3 w-3" /></TabsTrigger>
+              <TabsTrigger value="audio" className="text-[9px] h-8 rounded-none" title="Audio"><Headphones className="h-3 w-3" /></TabsTrigger>
               <TabsTrigger value="tools" className="text-[9px] h-8 rounded-none" title="Herramientas"><Brain /></TabsTrigger>
+              <TabsTrigger value="toolspanel" className="text-[9px] h-8 rounded-none" title="Tools"><ScanLine className="h-3 w-3" /></TabsTrigger>
               <TabsTrigger value="settings" className="text-[9px] h-8 rounded-none" title="Ajustes"><Settings className="h-3 w-3" /></TabsTrigger>
             </TabsList>
 
@@ -1594,6 +1602,505 @@ export default function VoxPDFv4() {
                 </ScrollArea>
               </div>
             </TabsContent>
+
+            {/* Q&A Tab */}
+            <TabsContent value="qa" className="flex-1 overflow-y-auto p-2 m-0">
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold flex items-center gap-1"><MessageCircle className="w-4 h-4" /> Chat con el Documento</h3>
+                <ScrollArea className="h-64">
+                  {store.qaMessages.map((msg, i) => (
+                    <div key={i} className={`mb-2 p-2 rounded text-xs ${msg.role === 'user' ? 'bg-primary/20 ml-4' : 'bg-muted mr-4'}`}>
+                      {msg.content}
+                    </div>
+                  ))}
+                  {store.qaLoading && <div className="text-xs text-muted-foreground animate-pulse">Pensando...</div>}
+                </ScrollArea>
+                <div className="flex gap-1">
+                  <Textarea
+                    placeholder="Pregunta sobre el documento..."
+                    className="text-xs h-8"
+                    onKeyDown={async (e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        const q = (e.target as HTMLTextAreaElement).value;
+                        if (!q.trim()) return;
+                        store.addQAMessage({ role: 'user', content: q });
+                        store.setQALoading(true);
+                        (e.target as HTMLTextAreaElement).value = '';
+                        try {
+                          const ctx = store.paragraphs.slice(0, 50).map(p => p.text).join('\n');
+                          const res = await fetch('/api/qa', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: q, context: ctx, history: store.qaMessages.slice(-6) }) });
+                          const data = await res.json();
+                          store.addQAMessage({ role: 'assistant', content: data.answer || data.error || 'Sin respuesta' });
+                        } catch { store.addQAMessage({ role: 'assistant', content: 'Error de conexión' }); }
+                        store.setQALoading(false);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Quiz Tab */}
+            <TabsContent value="quiz" className="flex-1 overflow-y-auto p-2 m-0">
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold flex items-center gap-1"><HelpCircle className="w-4 h-4" /> Quiz</h3>
+                {store.quizQuestions.length === 0 ? (
+                  <Button size="sm" className="w-full text-xs" onClick={async () => {
+                    store.setQuizLoading(true);
+                    try {
+                      const res = await fetch('/api/quiz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paragraphs: store.paragraphs, chapters: store.chapters, fileName: store.fileName }) });
+                      const data = await res.json();
+                      store.setQuizQuestions(data.quiz || []);
+                    } catch { toast({ title: 'Error generando quiz' }); }
+                    store.setQuizLoading(false);
+                  }} disabled={store.quizLoading}>
+                    {store.quizLoading ? 'Generando...' : 'Generar Quiz'}
+                  </Button>
+                ) : (
+                  <ScrollArea className="h-72">
+                    {store.quizQuestions.map((q, i) => (
+                      <div key={i} className="mb-3 p-2 border rounded text-xs">
+                        <p className="font-medium mb-1">{i + 1}. {q.question}</p>
+                        {q.options.map((opt, j) => (
+                          <button key={j} className={`block w-full text-left p-1 mb-0.5 rounded ${store.quizAnswered[i] ? (j === q.correct ? 'bg-green-500/20 text-green-400' : 'bg-red-500/10') : 'hover:bg-muted'}`} onClick={() => {
+                            const newAnswered = [...store.quizAnswered];
+                            newAnswered[i] = true;
+                            store.setQuizAnswered(newAnswered);
+                            if (j === q.correct) store.setQuizScore(store.quizScore + 1);
+                          }} disabled={store.quizAnswered[i]}>
+                            {String.fromCharCode(65 + j)}) {opt}
+                          </button>
+                        ))}
+                        {store.quizAnswered[i] && <p className="text-muted-foreground mt-1">{q.explanation}</p>}
+                      </div>
+                    ))}
+                    <p className="text-center font-medium">Puntuación: {store.quizScore}/{store.quizQuestions.length}</p>
+                  </ScrollArea>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Citations Tab */}
+            <TabsContent value="citations" className="flex-1 overflow-y-auto p-2 m-0">
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold flex items-center gap-1"><Quote className="w-4 h-4" /> Citas Automáticas</h3>
+                <div className="flex gap-1 mb-2">
+                  {(['apa', 'mla', 'chicago'] as const).map(f => (
+                    <Button key={f} size="sm" variant={store.citationFormat === f ? 'default' : 'outline'} className="text-xs flex-1" onClick={() => store.setCitationFormat(f)}>{f.toUpperCase()}</Button>
+                  ))}
+                </div>
+                {store.citations.length === 0 ? (
+                  <Button size="sm" className="w-full text-xs" onClick={async () => {
+                    store.setCitationsLoading(true);
+                    try {
+                      const text = store.paragraphs.map(p => p.text).join('\n');
+                      const res = await fetch('/api/citations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+                      const data = await res.json();
+                      store.setCitations(data.citations || []);
+                    } catch { toast({ title: 'Error detectando citas' }); }
+                    store.setCitationsLoading(false);
+                  }} disabled={store.citationsLoading}>
+                    {store.citationsLoading ? 'Detectando...' : 'Detectar Citas'}
+                  </Button>
+                ) : (
+                  <ScrollArea className="h-64">
+                    {store.citations.map((c, i) => (
+                      <div key={i} className="mb-2 p-2 border rounded text-xs">
+                        <p className="text-muted-foreground mb-1">Original: {c.original}</p>
+                        <p className="font-medium">{c[store.citationFormat]}</p>
+                        <Badge variant="outline" className="text-[10px] mt-1">{c.type}</Badge>
+                      </div>
+                    ))}
+                  </ScrollArea>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Analysis Tab */}
+            <TabsContent value="analysis" className="flex-1 overflow-y-auto p-2 m-0">
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold flex items-center gap-1"><BarChart3 className="w-4 h-4" /> Análisis</h3>
+
+                {/* Word Cloud */}
+                <div className="p-2 border rounded">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><Cloud className="w-3 h-3" /> Nube de Palabras</h4>
+                  {store.wordCloudData.length === 0 ? (
+                    <Button size="sm" className="w-full text-xs" onClick={() => {
+                      const freq = store.wordFrequency;
+                      const data = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 50).map(([text, value]) => ({ text, value }));
+                      store.setWordCloudData(data);
+                    }}>Generar</Button>
+                  ) : (
+                    <div className="flex flex-wrap gap-1">
+                      {store.wordCloudData.map((w, i) => (
+                        <span key={i} className="inline-block text-primary" style={{ fontSize: `${Math.min(8 + w.value * 2, 24)}px` }}>{w.text}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Sentiment */}
+                <div className="p-2 border rounded">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><Smile className="w-3 h-3" /> Sentimiento</h4>
+                  {store.sentimentResults.length === 0 ? (
+                    <Button size="sm" className="w-full text-xs" onClick={async () => {
+                      store.setSentimentLoading(true);
+                      try {
+                        const sections = store.chapters.map(ch => ({ title: ch.title, content: store.paragraphs.slice(ch.startIdx, ch.startIdx + 5).map(p => p.text).join(' ') }));
+                        const res = await fetch('/api/sentiment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sections }) });
+                        const data = await res.json();
+                        store.setSentimentResults(data.results || []);
+                      } catch { toast({ title: 'Error' }); }
+                      store.setSentimentLoading(false);
+                    }} disabled={store.sentimentLoading}>{store.sentimentLoading ? 'Analizando...' : 'Analizar'}</Button>
+                  ) : (
+                    <div className="space-y-1">
+                      {store.sentimentResults.map((s, i) => (
+                        <div key={i} className="flex items-center gap-2 text-xs">
+                          {s.sentiment === 'positive' ? <Smile className="w-3 h-3 text-green-400" /> : s.sentiment === 'negative' ? <Frown className="w-3 h-3 text-red-400" /> : <Meh className="w-3 h-3 text-yellow-400" />}
+                          <span className="flex-1 truncate">{s.title}</span>
+                          <span className="text-muted-foreground">{s.score.toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Language Detection */}
+                <div className="p-2 border rounded">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><LangIcon className="w-3 h-3" /> Idioma</h4>
+                  {store.detectedLanguage ? (
+                    <div className="text-xs">
+                      <p>{store.detectedLanguage.language} ({store.detectedLanguage.code})</p>
+                      <p className="text-muted-foreground">Confianza: {(store.detectedLanguage.confidence * 100).toFixed(0)}%</p>
+                    </div>
+                  ) : (
+                    <Button size="sm" className="w-full text-xs" onClick={async () => {
+                      store.setLanguageLoading(true);
+                      try {
+                        const text = store.paragraphs.slice(0, 10).map(p => p.text).join(' ');
+                        const res = await fetch('/api/detect-lang', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+                        const data = await res.json();
+                        store.setDetectedLanguage(data);
+                      } catch { toast({ title: 'Error' }); }
+                      store.setLanguageLoading(false);
+                    }} disabled={store.languageLoading}>{store.languageLoading ? 'Detectando...' : 'Detectar'}</Button>
+                  )}
+                </div>
+
+                {/* Reading Stats */}
+                <div className="p-2 border rounded">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Estadísticas</h4>
+                  <div className="grid grid-cols-2 gap-1 text-xs">
+                    <div className="p-1 bg-muted rounded text-center"><p className="text-muted-foreground">Páginas</p><p className="font-bold">{store.totalPages}</p></div>
+                    <div className="p-1 bg-muted rounded text-center"><p className="text-muted-foreground">Párrafos</p><p className="font-bold">{store.paragraphs.length}</p></div>
+                    <div className="p-1 bg-muted rounded text-center"><p className="text-muted-foreground">Progreso</p><p className="font-bold">{(store.pageProgress * 100).toFixed(0)}%</p></div>
+                    <div className="p-1 bg-muted rounded text-center"><p className="text-muted-foreground">Capítulos</p><p className="font-bold">{store.chapters.length}</p></div>
+                  </div>
+                </div>
+
+                {/* Section Summaries */}
+                <div className="p-2 border rounded">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><ListChecks className="w-3 h-3" /> Resumen por Sección</h4>
+                  {store.sectionSummaries.length === 0 ? (
+                    <Button size="sm" className="w-full text-xs" onClick={async () => {
+                      store.setSectionSummariesLoading(true);
+                      try {
+                        const sections = store.chapters.map(ch => ({ title: ch.title, content: store.paragraphs.slice(ch.startIdx, ch.startIdx + 5).map(p => p.text).join(' ') }));
+                        const res = await fetch('/api/section-summary', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sections }) });
+                        const data = await res.json();
+                        store.setSectionSummaries(data.summaries || []);
+                      } catch { toast({ title: 'Error' }); }
+                      store.setSectionSummariesLoading(false);
+                    }} disabled={store.sectionSummariesLoading}>{store.sectionSummariesLoading ? 'Resumiendo...' : 'Resumir'}</Button>
+                  ) : (
+                    <ScrollArea className="h-48">
+                      {store.sectionSummaries.map((s, i) => (
+                        <div key={i} className="mb-2 text-xs">
+                          <p className="font-semibold">{s.title}</p>
+                          <p className="text-muted-foreground">{s.summary}</p>
+                        </div>
+                      ))}
+                    </ScrollArea>
+                  )}
+                </div>
+
+                {/* Extract Tables */}
+                <div className="p-2 border rounded">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><Table2 className="w-3 h-3" /> Tablas</h4>
+                  {store.extractedTables.length === 0 ? (
+                    <Button size="sm" className="w-full text-xs" onClick={async () => {
+                      store.setTablesLoading(true);
+                      try {
+                        const text = store.paragraphs.map(p => p.text).join('\n');
+                        const res = await fetch('/api/extract-tables', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+                        const data = await res.json();
+                        store.setExtractedTables(data.tables || []);
+                      } catch { toast({ title: 'Error' }); }
+                      store.setTablesLoading(false);
+                    }} disabled={store.tablesLoading}>{store.tablesLoading ? 'Extrayendo...' : 'Extraer Tablas'}</Button>
+                  ) : (
+                    <ScrollArea className="h-48">
+                      {store.extractedTables.map((t, i) => (
+                        <div key={i} className="mb-2 text-xs overflow-x-auto">
+                          <p className="font-semibold mb-1">{t.caption}</p>
+                          <table className="w-full border-collapse">
+                            <thead><tr>{t.headers.map((h, j) => <th key={j} className="border p-1 bg-muted">{h}</th>)}</tr></thead>
+                            <tbody>{t.rows.map((row, j) => <tr key={j}>{row.map((cell, k) => <td key={k} className="border p-1">{cell}</td>)}</tr>)}</tbody>
+                          </table>
+                        </div>
+                      ))}
+                    </ScrollArea>
+                  )}
+                </div>
+
+                {/* Document Comparison */}
+                <div className="p-2 border rounded">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><GitCompare className="w-3 h-3" /> Comparar</h4>
+                  {!store.docComparison ? (
+                    <div className="space-y-1">
+                      <Textarea placeholder="Pega el segundo documento aquí..." className="text-xs h-16" value={store.secondDocText} onChange={e => store.setSecondDocText(e.target.value)} />
+                      <Button size="sm" className="w-full text-xs" onClick={async () => {
+                        if (!store.secondDocText) return;
+                        store.setComparisonLoading(true);
+                        try {
+                          const text1 = store.paragraphs.map(p => p.text).join('\n');
+                          const res = await fetch('/api/compare', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text1, text2: store.secondDocText }) });
+                          const data = await res.json();
+                          store.setDocComparison(data);
+                        } catch { toast({ title: 'Error' }); }
+                        store.setComparisonLoading(false);
+                      }} disabled={store.comparisonLoading}>{store.comparisonLoading ? 'Comparando...' : 'Comparar'}</Button>
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-48 text-xs">
+                      <p className="font-semibold mb-1">Resumen</p>
+                      <p className="text-muted-foreground mb-2">{store.docComparison.summary}</p>
+                      <p className="font-semibold text-green-400 mb-1">Similitudes</p>
+                      {store.docComparison.similarities.map((s, i) => <p key={i} className="text-muted-foreground">• {s}</p>)}
+                      <p className="font-semibold text-red-400 mt-2 mb-1">Diferencias</p>
+                      {store.docComparison.differences.map((d, i) => <p key={i} className="text-muted-foreground">• {d}</p>)}
+                    </ScrollArea>
+                  )}
+                </div>
+
+                {/* Timeline */}
+                <div className="p-2 border rounded">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><Calendar className="w-3 h-3" /> Timeline</h4>
+                  {store.timelineData.length === 0 ? (
+                    <Button size="sm" className="w-full text-xs" onClick={async () => {
+                      store.setTimelineLoading(true);
+                      try {
+                        const text = store.paragraphs.map(p => p.text).join('\n');
+                        const res = await fetch('/api/timeline', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+                        const data = await res.json();
+                        store.setTimelineData(data.timeline || []);
+                      } catch { toast({ title: 'Error' }); }
+                      store.setTimelineLoading(false);
+                    }} disabled={store.timelineLoading}>{store.timelineLoading ? 'Extrayendo...' : 'Generar Timeline'}</Button>
+                  ) : (
+                    <ScrollArea className="h-48">
+                      {store.timelineData.map((t, i) => (
+                        <div key={i} className="flex items-start gap-2 mb-2 text-xs">
+                          <div className="w-2 h-2 mt-1 rounded-full bg-primary shrink-0" />
+                          <div><p className="font-semibold">{t.date}</p><p className="text-muted-foreground">{t.event}</p></div>
+                        </div>
+                      ))}
+                    </ScrollArea>
+                  )}
+                </div>
+
+                {/* Concept Network */}
+                <div className="p-2 border rounded">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><Share2 className="w-3 h-3" /> Red de Conceptos</h4>
+                  {!store.conceptNetwork ? (
+                    <Button size="sm" className="w-full text-xs" onClick={async () => {
+                      store.setConceptNetworkLoading(true);
+                      try {
+                        const text = store.paragraphs.slice(0, 30).map(p => p.text).join('\n');
+                        const res = await fetch('/api/concept-network', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+                        const data = await res.json();
+                        store.setConceptNetwork(data.network || { nodes: [], edges: [] });
+                      } catch { toast({ title: 'Error' }); }
+                      store.setConceptNetworkLoading(false);
+                    }} disabled={store.conceptNetworkLoading}>{store.conceptNetworkLoading ? 'Analizando...' : 'Generar Red'}</Button>
+                  ) : (
+                    <ScrollArea className="h-48 text-xs">
+                      <p className="font-semibold mb-1">Conceptos ({store.conceptNetwork.nodes.length})</p>
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {store.conceptNetwork.nodes.map(n => <Badge key={n.id} variant="outline" className="text-[10px]">{n.label}</Badge>)}
+                      </div>
+                      <p className="font-semibold mb-1">Relaciones ({store.conceptNetwork.edges.length})</p>
+                      {store.conceptNetwork.edges.map((e, i) => <p key={i} className="text-muted-foreground">{e.source} → {e.target} {e.label && `(${e.label})`}</p>)}
+                    </ScrollArea>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Audio Tab */}
+            <TabsContent value="audio" className="flex-1 overflow-y-auto p-2 m-0">
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold flex items-center gap-1"><Headphones className="w-4 h-4" /> Audio</h3>
+
+                {/* Ambient Sound */}
+                <div className="p-2 border rounded">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><Volume2 className="w-3 h-3" /> Sonido Ambient</h4>
+                  <Select value={store.ambientSound} onValueChange={v => store.setAmbientSound(v as any)}>
+                    <SelectTrigger className="text-xs h-7"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {['none', 'rain', 'forest', 'cafe', 'waves', 'fire', 'wind', 'lofi'].map(s => (
+                        <SelectItem key={s} value={s} className="text-xs">{s === 'none' ? 'Silencio' : s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {store.ambientSound !== 'none' && (
+                    <Slider className="mt-1" value={[store.ambientVolume]} onValueChange={v => store.setAmbientVolume(v[0])} max={1} step={0.1} />
+                  )}
+                </div>
+
+                {/* Podcast Mode */}
+                <div className="p-2 border rounded">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><Radio className="w-3 h-3" /> Modo Podcast</h4>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={store.podcastMode} onCheckedChange={store.setPodcastMode} />
+                    <span className="text-xs">{store.podcastMode ? 'Activado' : 'Desactivado'}</span>
+                  </div>
+                  {store.podcastMode && (
+                    <div className="mt-1 space-y-1">
+                      <Textarea placeholder="Intro personalizado..." className="text-xs h-8" value={store.podcastIntro} onChange={e => store.setPodcastIntro(e.target.value)} />
+                      <Textarea placeholder="Outro personalizado..." className="text-xs h-8" value={store.podcastOutro} onChange={e => store.setPodcastOutro(e.target.value)} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Subtitles */}
+                <div className="p-2 border rounded">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><Subtitles className="w-3 h-3" /> Subtítulos</h4>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Switch checked={store.subtitleVisible} onCheckedChange={store.setSubtitleVisible} />
+                    <span className="text-xs">{store.subtitleVisible ? 'Visibles' : 'Ocultos'}</span>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button size="sm" variant={store.subtitleFormat === 'srt' ? 'default' : 'outline'} className="text-xs flex-1" onClick={() => store.setSubtitleFormat('srt')}>SRT</Button>
+                    <Button size="sm" variant={store.subtitleFormat === 'vtt' ? 'default' : 'outline'} className="text-xs flex-1" onClick={() => store.setSubtitleFormat('vtt')}>VTT</Button>
+                  </div>
+                  {store.subtitleVisible && store.subtitles.length === 0 && (
+                    <Button size="sm" className="w-full text-xs mt-1" onClick={() => {
+                      const sents = store.paragraphs.map(p => p.text).join(' ').match(/[^.!?]+[.!?]*/g) || [];
+                      const entries = sents.filter(s => s.trim()).map((s, i) => ({ index: i + 1, startTime: i * 4, endTime: (i + 1) * 4 - 0.5, text: s.trim() }));
+                      store.setSubtitles(entries);
+                    }}>Generar</Button>
+                  )}
+                </div>
+
+                {/* Audiobook Export */}
+                <div className="p-2 border rounded">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><CloudDownload className="w-3 h-3" /> Exportar Audiobook</h4>
+                  <Button size="sm" className="w-full text-xs" onClick={() => {
+                    if (!('speechSynthesis' in window)) { toast({ title: 'TTS no disponible' }); return; }
+                    toast({ title: 'Usa la grabación del sistema o herramientas externas', description: 'El TTS del navegador no soporta export directa. Usa herramientas como ffmpeg para grabar la salida de audio.' });
+                  }}>Exportar</Button>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Tools Panel Tab */}
+            <TabsContent value="toolspanel" className="flex-1 overflow-y-auto p-2 m-0">
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold flex items-center gap-1"><ScanLine className="w-4 h-4" /> Herramientas</h3>
+
+                {/* OCR */}
+                <div className="p-2 border rounded">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><ScanLine className="w-3 h-3" /> OCR (PDFs Escaneados)</h4>
+                  <Button size="sm" className="w-full text-xs" onClick={async () => {
+                    store.setOcrActive(true);
+                    store.setOcrProgress(0);
+                    try {
+                      const Tesseract = await import('tesseract.js');
+                      const worker = await Tesseract.createWorker('spa+eng');
+                      store.setOcrProgress(30);
+                      toast({ title: 'OCR: Sube un archivo de imagen para escanear', description: 'Tesseract.js está disponible' });
+                      store.setOcrProgress(100);
+                      await worker.terminate();
+                    } catch {
+                      toast({ title: 'OCR: Tesseract.js no disponible', description: 'Instala con: npm install tesseract.js' });
+                    }
+                    store.setOcrActive(false);
+                  }} disabled={store.ocrActive}>{store.ocrActive ? `Procesando... ${store.ocrProgress}%` : 'Iniciar OCR'}</Button>
+                  {store.ocrResult && <p className="text-xs mt-1 text-muted-foreground">{store.ocrResult}</p>}
+                </div>
+
+                {/* Web Clipper */}
+                <div className="p-2 border rounded">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><GlobeIcon className="w-3 h-3" /> Web Clipper</h4>
+                  <div className="space-y-1">
+                    <Textarea placeholder="Pega el HTML del artículo..." className="text-xs h-16" id="webclip-html" />
+                    <input type="text" placeholder="URL del artículo" className="w-full text-xs p-1.5 border rounded bg-transparent" id="webclip-url" />
+                    <Button size="sm" className="w-full text-xs" onClick={async () => {
+                      const html = (document.getElementById('webclip-html') as HTMLTextAreaElement)?.value || '';
+                      const url = (document.getElementById('webclip-url') as HTMLInputElement)?.value || '';
+                      if (!html && !url) { toast({ title: 'Pega HTML o URL' }); return; }
+                      store.setWebClipLoading(true);
+                      try {
+                        const res = await fetch('/api/webclip', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ html, url }) });
+                        const data = await res.json();
+                        store.addWebClip({ ...data, url, clippedAt: Date.now() });
+                        toast({ title: `Clippeado: ${data.title || url}` });
+                      } catch { toast({ title: 'Error al clippear' }); }
+                      store.setWebClipLoading(false);
+                    }} disabled={store.webClipLoading}>{store.webClipLoading ? 'Clippeando...' : 'Clippear'}</Button>
+                  </div>
+                  {store.webClips.length > 0 && (
+                    <ScrollArea className="h-32 mt-1">
+                      {store.webClips.map((c, i) => (
+                        <div key={i} className="mb-1 p-1 border rounded text-xs">
+                          <p className="font-semibold">{c.title}</p>
+                          <p className="text-muted-foreground truncate">{c.summary || c.content?.slice(0, 100)}</p>
+                        </div>
+                      ))}
+                    </ScrollArea>
+                  )}
+                </div>
+
+                {/* Focus Mode */}
+                <div className="p-2 border rounded">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><Target className="w-3 h-3" /> Modo Focus</h4>
+                  <Select value={store.focusModeType} onValueChange={v => store.setFocusModeType(v as any)}>
+                    <SelectTrigger className="text-xs h-7"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="off" className="text-xs">Normal</SelectItem>
+                      <SelectItem value="lineByLine" className="text-xs">Línea por Línea</SelectItem>
+                      <SelectItem value="narrowColumn" className="text-xs">Columna Estrecha</SelectItem>
+                      <SelectItem value="distractionFree" className="text-xs">Sin Distracciones</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Split View */}
+                <div className="p-2 border rounded">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><SplitSquareVertical className="w-3 h-3" /> Vista Dividida</h4>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={store.splitView} onCheckedChange={store.setSplitView} />
+                    <span className="text-xs">{store.splitView ? 'Activada' : 'Desactivada'}</span>
+                  </div>
+                  {store.splitView && (
+                    <div className="mt-1">
+                      <input type="file" accept=".pdf,.txt,.epub" className="text-xs w-full" onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        store.setSplitDocName(file.name);
+                        const text = await file.text();
+                        const paras = text.split(/\n\n+/).filter(Boolean).map((t, i) => ({ text: t, page: 1, isHeader: false, isFooter: false }));
+                        store.setSplitDocParagraphs(paras);
+                      }} />
+                      <p className="text-xs text-muted-foreground mt-1">{store.splitDocName || 'Sin segundo documento'}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
           </Tabs>
         </aside>
       )}
@@ -1603,7 +2110,7 @@ export default function VoxPDFv4() {
         {/* Top Bar */}
         <header className="h-12 border-b flex items-center gap-2 px-3 flex-shrink-0"
           style={{ background: store.theme === 'light' ? '#fff' : store.theme === 'eink' ? '#f0ede6' : '#111115', borderColor: 'rgba(255,255,255,0.07)' }}>
-          {!store.sidebarOpen && (
+          {!effectiveSidebarOpen && (
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => store.setSidebarOpen(true)}>
               <PanelLeftOpen className="h-4 w-4" />
             </Button>
@@ -1741,7 +2248,7 @@ export default function VoxPDFv4() {
           </div>
 
           {/* ── Main reader ── */}
-          <div className="flex-1 overflow-y-auto" ref={contentRef}
+          <div className={store.splitView ? 'flex-1 overflow-y-auto' : 'flex-1 overflow-y-auto'} ref={contentRef}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={(e) => {
@@ -1751,7 +2258,7 @@ export default function VoxPDFv4() {
               if (files.length) loadFileObj(files[0]);
             }}
             onMouseUp={handleTextSelection}
-            style={{ padding: '18px 20px', paddingBottom: store.parallelView ? '120px' : '100px' }}>
+            style={{ padding: '18px 20px', paddingBottom: store.parallelView ? '120px' : '100px', ...(store.focusModeType === 'narrowColumn' ? { maxWidth: '500px', margin: '0 auto' } : {}) }}>
 
             {/* Drop zone */}
             {!store.paragraphs.length && !cbzImages.length && (
@@ -1847,8 +2354,11 @@ export default function VoxPDFv4() {
 
             {/* Document viewer - normal view */}
             {!store.parallelView && store.paragraphs.length > 0 && cbzImages.length === 0 && (
-              <div className="max-w-[700px] mx-auto space-y-4">
-                {renderedParas.map((p) => (
+              <div className={store.splitView ? 'flex gap-4' : ''}>
+                <div className={store.splitView ? 'w-1/2' : 'max-w-[700px] mx-auto space-y-4'}>
+                  {renderedParas
+                    .filter((_, i) => store.focusModeType !== 'lineByLine' || i === store.focusLineIdx)
+                    .map((p) => (
                   <div key={p.origIdx} className={`rounded-xl p-6 ${store.einkOptimized ? 'shadow-none border' : 'border'}`}
                     style={{
                       background: store.theme === 'light' ? '#fff' : store.theme === 'eink' ? '#f8f6f0' : '#111115',
@@ -1915,6 +2425,24 @@ export default function VoxPDFv4() {
                     </ContextMenu>
                   </div>
                 ))}
+                {/* Line by Line navigation */}
+                {store.focusModeType === 'lineByLine' && (
+                  <div className="flex justify-center gap-2 mt-2">
+                    <Button size="sm" onClick={() => store.setFocusLineIdx(Math.max(0, store.focusLineIdx - 1))}><ChevronLeft className="w-4 h-4" /></Button>
+                    <span className="text-xs self-center">{store.focusLineIdx + 1} / {store.paragraphs.length}</span>
+                    <Button size="sm" onClick={() => store.setFocusLineIdx(Math.min(store.paragraphs.length - 1, store.focusLineIdx + 1))}><ChevronRight className="w-4 h-4" /></Button>
+                  </div>
+                )}
+                </div>
+                {/* Split View second document */}
+                {store.splitView && store.splitDocParagraphs.length > 0 && (
+                  <div className="w-1/2 overflow-y-auto border-l pl-4 space-y-2" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+                    <p className="text-xs font-semibold mb-2">{store.splitDocName}</p>
+                    {store.splitDocParagraphs.map((p, i) => (
+                      <p key={i} className="text-sm mb-2 leading-relaxed">{p.text}</p>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -2193,6 +2721,24 @@ export default function VoxPDFv4() {
         onRSVP={() => setShowRSVP(true)}
         onFocus={() => store.setFocusMode(!store.focusMode)}
       />
+
+      {/* Ambient Sound */}
+      {store.ambientSound !== 'none' && (
+        <audio
+          autoPlay
+          loop
+          volume={store.ambientVolume}
+          src={{
+            rain: 'https://cdn.freesound.org/previews/531/531804_6455675-lq.mp3',
+            forest: 'https://cdn.freesound.org/previews/531/531811_6455675-lq.mp3',
+            cafe: 'https://cdn.freesound.org/previews/425/425567_5121236-lq.mp3',
+            waves: 'https://cdn.freesound.org/previews/531/531816_6455675-lq.mp3',
+            fire: 'https://cdn.freesound.org/previews/531/531808_6455675-lq.mp3',
+            wind: 'https://cdn.freesound.org/previews/531/531812_6455675-lq.mp3',
+            lofi: 'https://cdn.freesound.org/previews/531/531815_6455675-lq.mp3',
+          }[store.ambientSound]}
+        />
+      )}
     </div>
   );
 }

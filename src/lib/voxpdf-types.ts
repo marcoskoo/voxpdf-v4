@@ -205,3 +205,96 @@ export const HEAT_COLORS = [
   'rgba(255,107,53,0.30)',
   'rgba(255,107,53,0.50)',
 ];
+
+// ── NEW: Quiz ──
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correct: number;
+  explanation: string;
+}
+
+// ── NEW: Citation ──
+export interface Citation {
+  original: string;
+  apa: string;
+  mla: string;
+  chicago: string;
+  type: string;
+}
+
+// ── NEW: Sentiment ──
+export interface SentimentResult {
+  title: string;
+  sentiment: string;
+  score: number;
+}
+
+// ── NEW: Section Summary ──
+export interface SectionSummary {
+  title: string;
+  summary: string;
+}
+
+// ── NEW: Extracted Table ──
+export interface ExtractedTable {
+  headers: string[];
+  rows: string[][];
+  caption: string;
+}
+
+// ── NEW: Language Detection ──
+export interface LanguageDetection {
+  language: string;
+  code: string;
+  confidence: number;
+}
+
+// ── NEW: Document Comparison ──
+export interface DocComparison {
+  similarities: string[];
+  differences: string[];
+  summary: string;
+}
+
+// ── NEW: Q&A Message ──
+export interface QAMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+// ── NEW: Reading Stats ──
+export interface ReadingStats {
+  totalPagesRead: number;
+  totalMinutesRead: number;
+  averageWPM: number;
+  sessionsCount: number;
+  dailyProgress: { date: string; pages: number; minutes: number }[];
+  streak: number;
+}
+
+// ── NEW: Focus Mode Type ──
+export type FocusModeType = 'off' | 'lineByLine' | 'narrowColumn' | 'distractionFree';
+
+// ── NEW: Audio Export Format ──
+export type AudioExportFormat = 'mp3' | 'm4b' | 'wav' | 'ogg';
+
+// ── NEW: Subtitle Format ──
+export interface SubtitleEntry {
+  index: number;
+  startTime: number;
+  endTime: number;
+  text: string;
+}
+
+// ── NEW: Web Clip ──
+export interface WebClip {
+  title: string;
+  content: string;
+  summary: string;
+  url: string;
+  clippedAt: number;
+}
+
+// ── NEW: Ambient Sound ──
+export type AmbientSound = 'none' | 'rain' | 'forest' | 'cafe' | 'waves' | 'fire' | 'wind' | 'lofi';
