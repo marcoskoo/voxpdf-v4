@@ -150,3 +150,23 @@ Work Log:
 Stage Summary:
 - "Leer URL en Voz Alta" reparado y desplegado (commit 01ec46b en text2voice3.vercel.app)
 - Lección: funciones que arrancan TTS tras cambios asíncronos de estado deben usar getState(), no el snapshot del render
+
+---
+Task ID: fix-403-fetch-url-cascade
+Agent: Main agent (Super Z)
+Task: Arreglar error 403 en "Leer URL en Voz Alta" (sitios con anti-bot)
+
+Work Log:
+- Diagnóstico: sitios con Cloudflare/WAF devuelven 403 al fetch directo desde IPs de datacenter (Vercel AWS)
+- Reescrito /api/fetch-url con cascada de 3 estrategias:
+  1. Directo con headers browser-like (retry con UA mínimo en 403/429)
+  2. Proxy de lectura r.jina.ai — ⚠️ SIN cabeceras propias (enviar User-Agent de Chrome desde datacenter IP dispara challenge Cloudflare "Just a moment" → 403; sin headers → 200), retry +3.5s en 401/403/429/5xx, parseo del formato "Title:/Markdown Content:"
+  3. Wayback Machine (availability API + snapshot)
+- Presupuesto de tiempo global 52s (maxDuration 60 de Vercel); umbral de calidad: aceptar solo si >=3 párrafos y >=50 palabras; si no, keepBest y al final devolver mejor esfuerzo o error claro
+- Fix TS narrowing: bestRef contenedor en vez de let con asignación en closure
+- Descartados: codetabs/allorigins (522 con Cloudflare), textise (403)
+- Pruebas producción (commit bbd592b): El País proxy 2201 palabras ✓, La Vanguardia proxy 1159 ✓, El Mundo proxy 1377-3418 ✓, Infobae direct 1912 ✓, Wikipedia/BBC direct ✓
+
+Stage Summary:
+- Error 403 resuelto: cascada directo→jina→wayback en producción
+- Lecciones: (1) jina requiere petición sin UA custom desde server; (2) muros de cookies devuelven páginas con pocas palabras → umbral de aceptación necesario; (3) sandbox local no sirve para probar jina/archive (rate-limit + bloqueo de red) → validar siempre en producción
