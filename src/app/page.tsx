@@ -1293,6 +1293,9 @@ export default function VoxPDFv4() {
               <Button className="w-full mb-2" style={{ background: accentColor }} onClick={() => fileInputRef.current?.click()}>
                 <Plus className="h-3 w-3 mr-1" /> Abrir archivo
               </Button>
+              <Button variant="outline" className="w-full mb-2 text-[11px]" onClick={() => { store.setSidebarTab('toolspanel'); setTimeout(() => document.getElementById('readurl-input')?.focus(), 150); }}>
+                <Volume2 className="h-3 w-3 mr-1" /> Leer URL en voz alta
+              </Button>
               <div className="text-[9px] opacity-40 uppercase tracking-wider mb-1 px-1">Archivos recientes</div>
               {getRecents().map((r: any, i: number) => (
                 <div key={i} className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:opacity-80 text-[11px]"
@@ -2055,13 +2058,61 @@ export default function VoxPDFv4() {
                   {store.webClips.length > 0 && (
                     <ScrollArea className="h-32 mt-1">
                       {store.webClips.map((c, i) => (
-                        <div key={i} className="mb-1 p-1 border rounded text-xs">
+                        <div key={i} className="mb-1 p-1 border rounded text-xs cursor-pointer hover:bg-muted" onClick={() => {
+                          const paras = c.content.split(/\n\s*\n|(?<=\.)\s{2,}/).map((t: string) => t.trim()).filter((t: string) => t.length > 0).map((txt: string, j: number) => ({ text: txt, page: 1 + Math.floor(j / 20), isHeader: false, isFooter: false }));
+                          if (paras.length) {
+                            store.setFileName(c.title || 'Web Clip');
+                            store.setParagraphs(paras);
+                            store.setTotalPages(Math.ceil(paras.length / 20));
+                            buildTOC(); computeWordFrequency(); computeMindMap();
+                            toast({ title: 'Clip cargado', description: 'Pulsa Play para escuchar' });
+                          }
+                        }}>
                           <p className="font-semibold">{c.title}</p>
                           <p className="text-muted-foreground truncate">{c.summary || c.content?.slice(0, 100)}</p>
                         </div>
                       ))}
                     </ScrollArea>
                   )}
+                </div>
+
+                {/* Leer URL en Voz Alta */}
+                <div className="p-2 border rounded border-primary/40">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><Volume2 className="w-3 h-3 text-primary" /> Leer URL en Voz Alta</h4>
+                  <div className="space-y-1">
+                    <input
+                      type="url"
+                      placeholder="https://ejemplo.com/articulo"
+                      className="w-full text-xs p-1.5 border rounded bg-transparent"
+                      id="readurl-input"
+                      onKeyDown={(e) => { if (e.key === 'Enter') (document.getElementById('readurl-go') as HTMLButtonElement)?.click(); }}
+                    />
+                    <Button id="readurl-go" size="sm" className="w-full text-xs" onClick={async () => {
+                      const url = (document.getElementById('readurl-input') as HTMLInputElement)?.value?.trim();
+                      if (!url) { toast({ title: 'Pega una URL primero' }); return; }
+                      store.setWebClipLoading(true);
+                      stopReading(true);
+                      try {
+                        const res = await fetch('/api/fetch-url', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
+                        const data = await res.json();
+                        if (!res.ok || data.error) { toast({ title: 'No se pudo leer la página', description: data.error, variant: 'destructive' }); return; }
+                        const paras = (data.paragraphs as string[]).map((txt, j) => ({ text: txt, page: 1 + Math.floor(j / 20), isHeader: false, isFooter: false }));
+                        store.setFileName(`🌐 ${data.title}`);
+                        store.setParagraphs(paras);
+                        store.setTotalPages(Math.ceil(paras.length / 20));
+                        store.setCurrentParaIdx(0);
+                        buildTOC(); computeWordFrequency(); computeMindMap();
+                        addRecent(`🌐 ${data.title}`, 0);
+                        toast({ title: 'Página cargada', description: `${data.wordCount} palabras · ~${data.estimatedMinutes} min de lectura. Reproduciendo...` });
+                        setTimeout(() => startReading(0), 400);
+                      } catch (err: any) {
+                        toast({ title: 'Error', description: err.message, variant: 'destructive' });
+                      }
+                      store.setWebClipLoading(false);
+                    }} disabled={store.webClipLoading}>
+                      {store.webClipLoading ? 'Descargando página...' : '🔊 Cargar y Leer'}
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Focus Mode */}
