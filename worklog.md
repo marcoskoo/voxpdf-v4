@@ -79,3 +79,21 @@ Stage Summary:
 - Feature "Leer URL en Voz Alta" completo y funcional: pegar URL → fetch server-side → extracción limpia → carga en lector → TTS automático
 - 2 errores TypeScript corregidos (audio volume, pdf-worker self/importScripts)
 - Build de producción OK. Pendiente: push a GitHub + redeploy Vercel (requiere tokens nuevos del usuario)
+
+---
+Task ID: sync-deploy-tokens
+Agent: Main agent (Super Z)
+Task: Push a GitHub + redeploy en Vercel con tokens nuevos
+
+Work Log:
+- Verificados tokens nuevos: GitHub (marcoskoo) y Vercel (rkoo131077-2735) OK
+- Actualizado remote origin con token nuevo; push exitoso 71b1b81..311d569 (4 commits: 20 plugins, Read URL Aloud, mejoras fetch-url/audio/worker, worklog)
+- Proyecto Vercel: my-project (prj_4ufyLmq3EWCsluqGi5BdzD2ONgbQ, orgId team_rrY3kJg1JfubXosORZ2YcM1F), sin integración Git (deploy por CLI)
+- vercel link + vercel deploy --prod: READY en 55s
+- Verificado: deploy URL HTTP 200, alias automático HTTP 200, API /api/fetch-url validación OK
+
+Stage Summary:
+- Código sincronizado en GitHub: marcoskoo/voxpdf-v4 (main @ 311d569)
+- Producción Vercel activa: https://my-project-rkoo131077-2735s-projects.vercel.app (READY, aliases: praticanto-web.vercel.app, my-project-eight-pied.vercel.app)
+- Nota: cuenta Vercel renombrada; URL antigua my-project-marcos-koos-projects ya no aplica
+- Sugerencia pendiente: conectar Git (vercel git connect) para auto-deploy en cada push
