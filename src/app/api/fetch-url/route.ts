@@ -220,14 +220,23 @@ export async function POST(req: NextRequest) {
     const t0 = Date.now();
     const budget = () => 52000 - (Date.now() - t0);
 
+    const wordCount = (ps: string[]) => ps.join(' ').split(/\s+/).length;
+    const isGood = (ps: string[]) => ps.length >= 3 && wordCount(ps) >= 50;
+    type Fetched = { title: string; paragraphs: string[]; source: string };
+    const bestRef: { current: Fetched | null } = { current: null };
+    const keepBest = (r: Fetched) => {
+      if (!bestRef.current || wordCount(r.paragraphs) > wordCount(bestRef.current.paragraphs)) bestRef.current = r;
+    };
+
     const errors: string[] = [];
 
     // Strategy 1: direct
     if (budget() > 8000) {
       try {
         const r = await tryDirect(rawUrl);
-        if (r.paragraphs.length) return NextResponse.json(packageResult(r.title, rawUrl, r.paragraphs, 'direct'));
-        errors.push('página sin texto legible');
+        if (isGood(r.paragraphs)) return NextResponse.json(packageResult(r.title, rawUrl, r.paragraphs, 'direct'));
+        keepBest({ ...r, source: 'direct' });
+        errors.push(`directo: poco texto útil (${wordCount(r.paragraphs)} palabras, probablemente muro de cookies)`);
       } catch (e: any) {
         errors.push(`directo: ${e?.message || 'fallo'}`);
       }
@@ -237,8 +246,9 @@ export async function POST(req: NextRequest) {
     if (budget() > 8000) {
       try {
         const r = await tryJina(rawUrl, Math.min(20000, budget()));
-        if (r.paragraphs.length) return NextResponse.json(packageResult(r.title, rawUrl, r.paragraphs, 'proxy'));
-        errors.push('proxy sin texto');
+        if (isGood(r.paragraphs)) return NextResponse.json(packageResult(r.title, rawUrl, r.paragraphs, 'proxy'));
+        keepBest({ ...r, source: 'proxy' });
+        errors.push('proxy: poco texto útil');
       } catch (e: any) {
         errors.push(`proxy: ${e?.message || 'fallo'}`);
       }
@@ -248,12 +258,19 @@ export async function POST(req: NextRequest) {
     if (budget() > 8000) {
       try {
         const r = await tryWayback(rawUrl, budget());
-        if (r.paragraphs.length) return NextResponse.json(packageResult(r.title, rawUrl, r.paragraphs, 'archivo'));
-        errors.push('archivo sin texto');
+        if (isGood(r.paragraphs)) return NextResponse.json(packageResult(r.title, rawUrl, r.paragraphs, 'archivo'));
+        keepBest({ ...r, source: 'archivo' });
+        errors.push('archivo: poco texto útil');
       } catch (e: any) {
         errors.push(`archivo: ${e?.message || 'fallo'}`);
       }
     } else errors.push('sin tiempo para archivo');
+
+    // Ninguna estrategia obtuvo contenido sólido: devolver el mejor esfuerzo si existe
+    const best = bestRef.current;
+    if (best && best.paragraphs.length && wordCount(best.paragraphs) >= 15) {
+      return NextResponse.json(packageResult(best.title, rawUrl, best.paragraphs, best.source));
+    }
 
     return NextResponse.json({
       error: 'El sitio bloquea el acceso automatizado. Intenta copiar el texto manualmente con el Web Clipper.',
