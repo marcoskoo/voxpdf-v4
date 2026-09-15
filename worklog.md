@@ -170,3 +170,21 @@ Work Log:
 Stage Summary:
 - Error 403 resuelto: cascada directo→jina→wayback en producción
 - Lecciones: (1) jina requiere petición sin UA custom desde server; (2) muros de cookies devuelven páginas con pocas palabras → umbral de aceptación necesario; (3) sandbox local no sirve para probar jina/archive (rate-limit + bloqueo de red) → validar siempre en producción
+
+---
+Task ID: read-article-mdv-audio
+Agent: Main agent (Super Z)
+Task: Leer artículo de mensajerosdivinos.org (URL del usuario)
+
+Work Log:
+- Probada URL exacta del usuario en producción: la cascada la rescató vía Wayback Machine (fuente: archivo), 22 párrafos / 823 palabras, contenido completo del mensaje
+- Identificados párrafos reales del mensaje: 1-17 (0=menú, 18-19=anuncio lateral, 20-21=pie legal)
+- Generado audio profesional con skill TTS (z-ai-web-dev-sdk, voz tongtong, speed 0.95):
+  - 5 trozos <=900 chars cada uno, concatenados con ffmpeg concat → MP3 (libmp3lame q=4)
+  - scripts/generate-article-audio.js persistido para regenerar
+- Audio final: download/mensaje-virgen-maria-13-oct-2025.mp3 — 2.5 MB, 6 min 41 s, 698 palabras
+- Verificación volumedetect: mean -22.7 dB, max -2.7 dB (voz real, sin silencio)
+
+Stage Summary:
+- URL del usuario 100% legible en la app (cascada → archivo)
+- MP3 del mensaje completo entregado en /home/z/my-project/download/
