@@ -111,3 +111,24 @@ Work Log:
 Stage Summary:
 - Producción accesible en https://text2voice3.vercel.app (dominio permanente del proyecto)
 - Dominio asociado al proyecto my-project en la cuenta rkoo131077-2735
+
+---
+Task ID: git-connect-rename-ocr
+Agent: Main agent (Super Z)
+Task: Conectar Git auto-deploy + renombrar proyecto a text2voice3 + OCR funcional
+
+Work Log:
+- Renombrado proyecto Vercel my-project → text2voice3 (PATCH /v9/projects)
+- Actualizado .vercel/project.json local con projectName: text2voice3
+- Conectado Git vía POST /v10/projects/text2voice3/link: marcoskoo/voxpdf-v4, productionBranch main
+- Implementado OCR funcional en page.tsx: input de imagen oculto, handleOcrFile con Tesseract spa+eng + logger de progreso, barra de progreso visual, ScrollArea con texto extraído, loadOcrIntoReader carga párrafos y dispara TTS
+- Estado nuevo ocrFileName; verificado tesseract.js ^7.0.0
+- Prueba real del motor OCR en Node (scripts/test-ocr.js + imagen generada scripts/make_ocr_test.py): extrajo "Hola mundo... 12345..." correctamente, 15 palabras
+- next build OK; commit f95eafe; git push → auto-deploy disparado automáticamente (BUILDING → READY en ~45s)
+- Verificado en producción: text2voice3.vercel.app sirve el nuevo código (botón "Seleccionar Imagen" presente en chunk JS)
+
+Stage Summary:
+- Proyecto Vercel renombrado a text2voice3, dominio propio intacto
+- AUTO-DEPLOY ACTIVO: cada push a main → deploy automático en producción
+- OCR funcional de punta a punta (imagen → texto → lector TTS)
+- Flujo de trabajo futuro: editar → commit → push (sin comandos de deploy manuales)
