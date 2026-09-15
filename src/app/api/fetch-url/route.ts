@@ -84,14 +84,29 @@ export async function POST(req: NextRequest) {
         if (text.length >= 30) blocks.push(text);
       }
 
+      // Heuristic 1: drop blocks that are mostly non-Latin characters
+      // (language menus, unicode noise on multilingual sites like Wikipedia)
+      const latinRatio = (s: string): number => {
+        const letters = s.replace(/[^a-zA-ZáéíóúüñÁÉÍÓÚÜÑçÇäëïöüÄËÏÖÜàèìòùÀÈÌÒÙÂÊÎÔÛâêîôû]/g, '');
+        return s.replace(/\s/g, '').length > 0 ? letters.length / s.replace(/\s/g, '').length : 0;
+      };
+
       // Deduplicate repeated blocks (menus, cookie banners)
       const seen = new Set<string>();
-      paragraphs = blocks.filter(b => {
+      let candidates = blocks.filter(b => {
         const key = b.slice(0, 80).toLowerCase();
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
-      }).slice(0, 300);
+      });
+
+      // Heuristic 2: if the page has plenty of substantial paragraphs,
+      // drop short fragments (menus, breadcrumbs, link lists)
+      if (candidates.filter(b => b.length >= 200).length >= 5) {
+        candidates = candidates.filter(b => b.length >= 60);
+      }
+
+      paragraphs = candidates.filter(b => latinRatio(b) >= 0.6).slice(0, 300);
 
       // If almost nothing extracted, fall back to full-text strip
       if (paragraphs.length < 2) {
@@ -118,8 +133,12 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Fetch URL error:', error);
-    const msg = error?.name === 'TimeoutError' ? 'La página tardó demasiado en responder'
-      : error?.message?.includes('ENOTFOUND') ? 'No se encontró el dominio'
+    const causeCode = error?.cause?.code || error?.code || '';
+    const msg = error?.name === 'TimeoutError' || causeCode === 'UND_ERR_CONNECT_TIMEOUT' ? 'La página tardó demasiado en responder'
+      : causeCode === 'ENOTFOUND' || causeCode === 'EAI_AGAIN' ? 'No se encontró el dominio. Revisa la URL'
+      : causeCode === 'ECONNREFUSED' ? 'El servidor rechazó la conexión'
+      : causeCode === 'CERT_HAS_EXPIRED' || causeCode === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' ? 'Certificado SSL inválido en el sitio'
+      : error?.message === 'fetch failed' ? 'No se pudo conectar al sitio. Revisa la URL'
       : error?.message || 'Error al acceder a la URL';
     return NextResponse.json({ error: msg }, { status: 500 });
   }

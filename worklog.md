@@ -59,3 +59,23 @@ Stage Summary:
 - Local fallbacks for flashcards and mind map when GLM is unavailable
 - No Claude/Anthropic code or references remain in active source
 - Archive files with old Claude API keys removed for security
+
+---
+Task ID: continue-webclip-url-tts
+Agent: Main agent (Super Z)
+Task: Completar feature "pegar URL y leer en voz alta" (Web Clipper URL → TTS)
+
+Work Log:
+- Verificado: ruta /api/fetch-url y UI "Leer URL en Voz Alta" ya existían de sesión previa
+- Mejorada extracción en src/app/api/fetch-url/route.ts: filtro latinRatio >= 0.6 (elimina menús de idiomas no-latinos) + descarta bloques < 60 chars cuando hay párrafos sustanciales (>=5 bloques de 200+ chars)
+- Mejorado manejo de errores: inspección de error.cause.code (ENOTFOUND, EAI_AGAIN, ECONNREFUSED, timeouts undici, certificados SSL) con mensajes claros en español
+- Corregido error TS en page.tsx: prop volume inválida en <audio> → reemplazada por ambientAudioRef + useEffect de sincronización + key={store.ambientSound} para remontar al cambiar sonido
+- Corregido error TS en pdf-worker.ts: eliminado declare const self: Worker (conflicto con DOM lib), agregado declare function importScripts, self.onmessage cast a any
+- Pruebas end-to-end: Wikipedia (extracción limpia, 15537 palabras), BBC Mundo (1936 palabras), text.npr.org (texto plano OK), URL inválida (400 correcto), dominio inexistente (mensaje claro), sitio con anti-bot 403 (mensaje claro)
+- npx tsc --noEmit: src/ sin errores
+- npx next build: exitoso, todas las rutas API registradas
+
+Stage Summary:
+- Feature "Leer URL en Voz Alta" completo y funcional: pegar URL → fetch server-side → extracción limpia → carga en lector → TTS automático
+- 2 errores TypeScript corregidos (audio volume, pdf-worker self/importScripts)
+- Build de producción OK. Pendiente: push a GitHub + redeploy Vercel (requiere tokens nuevos del usuario)

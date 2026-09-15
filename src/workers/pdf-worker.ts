@@ -2,7 +2,7 @@
  * VoxPDF v4 — PDF Web Worker
  * Parses PDF in a separate thread to avoid blocking the UI
  */
-declare const self: Worker;
+declare function importScripts(...urls: string[]): void;
 
 interface PDFWorkerMessage {
   type: 'parse';
@@ -90,7 +90,7 @@ async function parsePDF(data: ArrayBuffer): Promise<PDFPageData> {
   return { paragraphs, totalPages };
 }
 
-self.onmessage = async (e: MessageEvent<PDFWorkerMessage>) => {
+(self as any).onmessage = async (e: MessageEvent<PDFWorkerMessage>) => {
   if (e.data.type === 'parse') {
     try {
       const result = await parsePDF(e.data.data);

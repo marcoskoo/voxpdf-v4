@@ -110,6 +110,7 @@ export default function VoxPDFv4() {
   const renderedPagesRef = useRef<Set<number>>(new Set());
   const translationWorkerRef = useRef<Worker | null>(null);
   const pdfWorkerRef = useRef<Worker | null>(null);
+  const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
   const [showBookmarkModal, setShowBookmarkModal] = useState(false);
   const [bookmarkNote, setBookmarkNote] = useState('');
   const [bookmarkParaIdx, setBookmarkParaIdx] = useState(0);
@@ -184,6 +185,13 @@ export default function VoxPDFv4() {
   useEffect(() => {
     document.documentElement.setAttribute('data-invert', store.invertMode ? 'on' : 'off');
   }, [store.invertMode]);
+
+  // ── Ambient sound volume sync ──
+  useEffect(() => {
+    if (ambientAudioRef.current) {
+      ambientAudioRef.current.volume = store.ambientVolume;
+    }
+  }, [store.ambientVolume, store.ambientSound]);
 
   // ── Save settings on change ──
   useEffect(() => {
@@ -2776,9 +2784,10 @@ export default function VoxPDFv4() {
       {/* Ambient Sound */}
       {store.ambientSound !== 'none' && (
         <audio
+          key={store.ambientSound}
+          ref={ambientAudioRef}
           autoPlay
           loop
-          volume={store.ambientVolume}
           src={{
             rain: 'https://cdn.freesound.org/previews/531/531804_6455675-lq.mp3',
             forest: 'https://cdn.freesound.org/previews/531/531811_6455675-lq.mp3',
