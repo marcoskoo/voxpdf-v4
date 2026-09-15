@@ -97,3 +97,17 @@ Stage Summary:
 - Producción Vercel activa: https://my-project-rkoo131077-2735s-projects.vercel.app (READY, aliases: praticanto-web.vercel.app, my-project-eight-pied.vercel.app)
 - Nota: cuenta Vercel renombrada; URL antigua my-project-marcos-koos-projects ya no aplica
 - Sugerencia pendiente: conectar Git (vercel git connect) para auto-deploy en cada push
+
+---
+Task ID: custom-domain-text2voice3
+Agent: Main agent (Super Z)
+Task: Asignar dominio https://text2voice3.vercel.app al proyecto
+
+Work Log:
+- Agregado dominio text2voice3.vercel.app vía API POST /v9/projects/prj_4ufyLmq3EWCsluqGi5BdzD2ONgbQ/domains
+- Dominio verificado instantáneamente (verified: true)
+- Verificación end-to-end: HTTP 200, título "VoxPDF v4 — Lector con Voz + GLM", API /api/fetch-url OK
+
+Stage Summary:
+- Producción accesible en https://text2voice3.vercel.app (dominio permanente del proyecto)
+- Dominio asociado al proyecto my-project en la cuenta rkoo131077-2735
