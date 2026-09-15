@@ -132,3 +132,21 @@ Stage Summary:
 - AUTO-DEPLOY ACTIVO: cada push a main → deploy automático en producción
 - OCR funcional de punta a punta (imagen → texto → lector TTS)
 - Flujo de trabajo futuro: editar → commit → push (sin comandos de deploy manuales)
+
+---
+Task ID: fix-read-url-tts
+Agent: Main agent (Super Z)
+Task: Arreglar "Leer URL en Voz Alta" que no funcionaba
+
+Work Log:
+- Diagnóstico: backend /api/fetch-url OK en producción (Wikipedia 300 párrafos, BBC OK) → el fallo era frontend
+- Causa raíz: stale closure. El handler hace setParagraphs() y luego setTimeout(() => startReading(0), 400). Ese startReading viene del render ANTERIOR (const store = useVoxPDFStore() es snapshot), ve store.paragraphs vacío → toast "Fin del documento" → no reproduce
+- Fix: startReading ahora lee estado fresco con useVoxPDFStore.getState() (paragraphs, currentParaIdx, skipHF) — robusto para todos los puntos de llamada (play, context menu, URL, OCR)
+- Fix UX: auto-prepend https:// cuando la URL pegada no trae protocolo
+- Mismo patrón roto en loadOcrIntoReader queda cubierto por el fix central
+- tsc OK, build OK, commit 01ec46b, push → auto-deploy BUILDING → READY en ~45s
+- Verificación end-to-end producción: fetch 5200 palabras → 109 párrafos → 6 páginas → primer párrafo listo para TTS
+
+Stage Summary:
+- "Leer URL en Voz Alta" reparado y desplegado (commit 01ec46b en text2voice3.vercel.app)
+- Lección: funciones que arrancan TTS tras cambios asíncronos de estado deben usar getState(), no el snapshot del render
