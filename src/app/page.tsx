@@ -111,10 +111,12 @@ export default function VoxPDFv4() {
   const translationWorkerRef = useRef<Worker | null>(null);
   const pdfWorkerRef = useRef<Worker | null>(null);
   const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
+  const ocrInputRef = useRef<HTMLInputElement>(null);
   const [showBookmarkModal, setShowBookmarkModal] = useState(false);
   const [bookmarkNote, setBookmarkNote] = useState('');
   const [bookmarkParaIdx, setBookmarkParaIdx] = useState(0);
   const [showStatsModal, setShowStatsModal] = useState(false);
+  const [ocrFileName, setOcrFileName] = useState('');
   const [showMindMap, setShowMindMap] = useState(false);
   const [showGlossaryPopup, setShowGlossaryPopup] = useState(false);
   const [glossaryPopupTerm, setGlossaryPopupTerm] = useState('');
@@ -505,6 +507,58 @@ export default function VoxPDFv4() {
     let r = getRecents().filter((x: any) => x.name !== name);
     r.unshift({ name, pct, date: Date.now() });
     try { localStorage.setItem('vox4_recents', JSON.stringify(r.slice(0, 12))); } catch {}
+  }
+
+  // ── OCR: imagen → texto → lector ──
+  async function handleOcrFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    stopReading(true);
+    store.setOcrActive(true);
+    store.setOcrProgress(5);
+    store.setOcrResult('');
+    setOcrFileName(file.name);
+    try {
+      const Tesseract = await import('tesseract.js');
+      const worker = await Tesseract.createWorker('spa+eng', 1, {
+        logger: (m: any) => {
+          if (m.status === 'loading language traineddata' || m.status === 'initializing api') store.setOcrProgress(15);
+          if (m.status === 'recognizing text') store.setOcrProgress(30 + Math.round(m.progress * 65));
+        },
+      });
+      store.setOcrProgress(20);
+      const { data } = await worker.recognize(file);
+      await worker.terminate();
+      const text = (data?.text || '').replace(/\n{3,}/g, '\n\n').replace(/[ \t]+/g, ' ').trim();
+      store.setOcrProgress(100);
+      if (text.length < 10) {
+        store.setOcrResult('');
+        toast({ title: 'OCR sin resultados', description: 'No se detectó texto legible. Prueba con una imagen más nítida y con buen contraste.', variant: 'destructive' });
+      } else {
+        store.setOcrResult(text);
+        toast({ title: 'OCR completado ✓', description: `${text.split(/\s+/).length} palabras extraídas de ${file.name}` });
+      }
+    } catch (err: any) {
+      toast({ title: 'Error en OCR', description: err?.message || 'No se pudo procesar la imagen', variant: 'destructive' });
+    }
+    store.setOcrActive(false);
+    e.target.value = '';
+  }
+
+  function loadOcrIntoReader() {
+    const text = store.ocrResult;
+    if (!text) { toast({ title: 'Primero extrae texto con OCR' }); return; }
+    const paras = text.split(/\n\s*\n|(?<=\.)\s{2,}/).map((t: string) => t.trim()).filter((t: string) => t.length > 0).map((txt: string, j: number) => ({ text: txt, page: 1 + Math.floor(j / 20), isHeader: false, isFooter: false }));
+    if (!paras.length) { toast({ title: 'No hay texto para cargar' }); return; }
+    const name = ocrFileName ? `📄 ${ocrFileName}` : '📄 OCR';
+    store.setFileName(name);
+    store.setParagraphs(paras);
+    store.setTotalPages(Math.ceil(paras.length / 20));
+    store.setCurrentParaIdx(0);
+    buildTOC(); computeWordFrequency(); computeMindMap();
+    addRecent(name, 0);
+    toast({ title: 'Texto OCR cargado', description: 'Reproduciendo...' });
+    setTimeout(() => startReading(0), 400);
   }
 
   // ── Progress ──
@@ -2024,23 +2078,24 @@ export default function VoxPDFv4() {
 
                 {/* OCR */}
                 <div className="p-2 border rounded">
-                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><ScanLine className="w-3 h-3" /> OCR (PDFs Escaneados)</h4>
-                  <Button size="sm" className="w-full text-xs" onClick={async () => {
-                    store.setOcrActive(true);
-                    store.setOcrProgress(0);
-                    try {
-                      const Tesseract = await import('tesseract.js');
-                      const worker = await Tesseract.createWorker('spa+eng');
-                      store.setOcrProgress(30);
-                      toast({ title: 'OCR: Sube un archivo de imagen para escanear', description: 'Tesseract.js está disponible' });
-                      store.setOcrProgress(100);
-                      await worker.terminate();
-                    } catch {
-                      toast({ title: 'OCR: Tesseract.js no disponible', description: 'Instala con: npm install tesseract.js' });
-                    }
-                    store.setOcrActive(false);
-                  }} disabled={store.ocrActive}>{store.ocrActive ? `Procesando... ${store.ocrProgress}%` : 'Iniciar OCR'}</Button>
-                  {store.ocrResult && <p className="text-xs mt-1 text-muted-foreground">{store.ocrResult}</p>}
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><ScanLine className="w-3 h-3" /> OCR (Imágenes / PDFs Escaneados)</h4>
+                  <input ref={ocrInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/bmp" className="hidden" onChange={handleOcrFile} />
+                  <Button size="sm" className="w-full text-xs" onClick={() => ocrInputRef.current?.click()} disabled={store.ocrActive}>
+                    {store.ocrActive ? `Procesando... ${store.ocrProgress}%` : '📷 Seleccionar Imagen'}
+                  </Button>
+                  {store.ocrActive && (
+                    <div className="w-full h-1 bg-muted rounded mt-1.5 overflow-hidden">
+                      <div className="h-full bg-primary transition-all" style={{ width: `${store.ocrProgress}%` }} />
+                    </div>
+                  )}
+                  {store.ocrResult && (
+                    <div className="mt-1.5">
+                      <ScrollArea className="h-28 border rounded p-1.5">
+                        <p className="text-xs whitespace-pre-wrap text-muted-foreground">{store.ocrResult}</p>
+                      </ScrollArea>
+                      <Button size="sm" className="w-full text-xs mt-1" onClick={loadOcrIntoReader}>🔊 Cargar en el Lector</Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Web Clipper */}
