@@ -692,10 +692,14 @@ export default function VoxPDFv4() {
   // ── TTS Engine ──
   function startReading(fromIdx?: number) {
     stopReading(true);
-    const startIdx = fromIdx ?? store.currentParaIdx;
-    const readableParas = store.paragraphs
+    // ⚠️ Leer estado FRESCO del store: si se llama desde un closure antiguo
+    // (ej. setTimeout tras cargar una URL/OCR), el snapshot del render
+    // todavía tendría paragraphs vacíos y fallaría con "Fin del documento".
+    const st = useVoxPDFStore.getState();
+    const startIdx = fromIdx ?? st.currentParaIdx;
+    const readableParas = st.paragraphs
       .map((p, i) => ({ ...p, idx: i }))
-      .filter(p => !(p.isHeader || p.isFooter) || !store.skipHF)
+      .filter(p => !(p.isHeader || p.isFooter) || !st.skipHF)
       .filter(p => p.idx >= startIdx);
     if (!readableParas.length) {
       toast({ title: 'Fin del documento' });
@@ -2151,8 +2155,10 @@ export default function VoxPDFv4() {
                       onKeyDown={(e) => { if (e.key === 'Enter') (document.getElementById('readurl-go') as HTMLButtonElement)?.click(); }}
                     />
                     <Button id="readurl-go" size="sm" className="w-full text-xs" onClick={async () => {
-                      const url = (document.getElementById('readurl-input') as HTMLInputElement)?.value?.trim();
+                      let url = (document.getElementById('readurl-input') as HTMLInputElement)?.value?.trim();
                       if (!url) { toast({ title: 'Pega una URL primero' }); return; }
+                      // Auto-completar protocolo si falta (ej. "bbc.com/mundo")
+                      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
                       store.setWebClipLoading(true);
                       stopReading(true);
                       try {
