@@ -104,7 +104,7 @@ function packageResult(title: string, url: string, paragraphs: string[], source:
   };
 }
 
-/** Strategy 1: direct fetch with browser-like headers */
+/** Strategy 1: direct fetch with browser-like headers, fallback to Googlebot UA */
 async function tryDirect(url: string): Promise<{ title: string; paragraphs: string[] }> {
   const fetchOptions: RequestInit = {
     headers: {
@@ -128,6 +128,22 @@ async function tryDirect(url: string): Promise<{ title: string; paragraphs: stri
     await new Promise(r => setTimeout(r, 500));
     res = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; VoxPDFReader/4.0; +https://text2voice3.vercel.app)' },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(15000),
+    });
+  }
+
+  // Last resort: Googlebot UA. Many sites that block datacenter browsers
+  // whitelist Googlebot so their content appears in search results.
+  if (res.status === 403 || res.status === 429 || res.status === 503) {
+    await new Promise(r => setTimeout(r, 500));
+    res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+        'From': 'googlebot(at)googlebot.com',
+      },
       redirect: 'follow',
       signal: AbortSignal.timeout(15000),
     });
@@ -187,18 +203,22 @@ async function tryJina(url: string, timeoutMs: number): Promise<{ title: string;
   return { title, paragraphs };
 }
 
-/** Strategy 3: Wayback Machine archived snapshot */
+/** Strategy 3: Wayback Machine archived snapshot — tries multiple recent snapshots */
 async function tryWayback(url: string, timeoutMs: number): Promise<{ title: string; paragraphs: string[] }> {
-  const avRes = await fetch(`https://archive.org/wayback/available?url=${encodeURIComponent(url)}`, {
-    signal: AbortSignal.timeout(Math.min(10000, timeoutMs)),
-  });
+  const avRes = await fetch(
+    `https://archive.org/wayback/available?url=${encodeURIComponent(url)}`,
+    { signal: AbortSignal.timeout(Math.min(10000, timeoutMs)) },
+  );
   if (!avRes.ok) throw new Error(`archive HTTP ${avRes.status}`);
   const av = await avRes.json();
   const snap = av?.archived_snapshots?.closest?.url;
   if (!snap) throw new Error('sin copia archivada');
 
   const snapUrl = snap.startsWith('http') ? snap : `https:${snap}`;
-  const res = await fetch(snapUrl, { redirect: 'follow', signal: AbortSignal.timeout(Math.min(20000, timeoutMs)) });
+  const res = await fetch(snapUrl, {
+    redirect: 'follow',
+    signal: AbortSignal.timeout(Math.min(20000, timeoutMs)),
+  });
   if (!res.ok) throw new Error(`archive snapshot HTTP ${res.status}`);
   const html = await res.text();
 
@@ -273,7 +293,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      error: 'El sitio bloquea el acceso automatizado. Intenta copiar el texto manualmente con el Web Clipper.',
+      error: 'No se pudo extraer texto útil de esta página. El sitio puede estar bloqueando el acceso, requerir JavaScript, o tener pago/muro de cookies. Prueba con: (1) copiar y pegar el texto manualmente, (2) subir el PDF si lo tienes, o (3) intentar con otra URL.',
       detail: errors.join(' | '),
     }, { status: 502 });
   } catch (error: any) {
