@@ -188,3 +188,25 @@ Work Log:
 Stage Summary:
 - URL del usuario 100% legible en la app (cascada → archivo)
 - MP3 del mensaje completo entregado en /home/z/my-project/download/
+
+---
+Task ID: 8
+Agent: Main Agent
+Task: User reported "el sitio web bloquea, no puede leer las paginas" — diagnose and harden fetch-url
+
+Work Log:
+- Tested production API directly with the user's actual URL (mensajerosdivinos 13-oct-2025): HTTP 200, 22 paragraphs, 823 words via Wayback Machine — works perfectly.
+- Tested multiple real URLs on production: BBC Mundo (proxy, 140w), Wikipedia (direct, 15713w), Medium (proxy, 134w) — all return 200.
+- Confirmed the 502 "El sitio bloquea el acceso automatizado" only triggers when ALL 3 strategies produce <15 words (very rare — usually means strict Cloudflare + JS-only SPA + no Wayback snapshot).
+- Added 3rd fallback in direct strategy: Googlebot UA (`Googlebot/2.1` + `From: googlebot(at)googlebot.com`). Many sites that block datacenter browsers whitelist Googlebot so their content is indexed by search.
+- Improved error message to give user 3 actionable alternatives: (1) paste text manually, (2) upload PDF if available, (3) try another URL.
+- Verified TypeScript compiles (filtering out unrelated examples/ and skills/ test files).
+- Built with `next build` cleanly (22 routes generated, no errors).
+- Committed (beedfb1) and pushed to origin/main → auto-deployed to https://text2voice3.vercel.app.
+- Verified post-deploy: mensajerosdivinos URL returns 200 with full content (22 paras, 823 words).
+
+Stage Summary:
+- The user's actual target URL works perfectly on production.
+- Direct strategy now tries 3 UAs in sequence: browser-like → minimal → Googlebot. More sites should be reachable without falling through to proxy/archive.
+- Clearer error message guides users toward 3 alternatives when all strategies fail.
+- Production is live with the hardened fetch-url cascade.
