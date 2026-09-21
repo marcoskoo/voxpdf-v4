@@ -26,6 +26,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // ── PDF.js dynamic import ──
 let pdfjsLib: any = null;
@@ -94,6 +95,7 @@ const THEME_STYLES: Record<string, React.CSSProperties> = {
 
 export default function VoxPDFv4() {
   const store = useVoxPDFStore();
+  const isMobile = useIsMobile();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
@@ -1323,8 +1325,20 @@ export default function VoxPDFv4() {
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: themeStyle.background, color: themeStyle.color, fontFamily: fontStack }}>
       {/* ══ SIDEBAR ══ */}
+      {/* Mobile backdrop */}
+      {isMobile && effectiveSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+          onClick={() => store.setSidebarOpen(false)}
+        />
+      )}
       {effectiveSidebarOpen && (
-        <aside className="w-[280px] min-w-[280px] border-r flex flex-col overflow-hidden"
+        <aside
+          className={
+            isMobile
+              ? 'fixed inset-y-0 left-0 z-50 w-[85vw] max-w-[320px] border-r flex flex-col overflow-hidden shadow-2xl'
+              : 'w-[280px] min-w-[280px] border-r flex flex-col overflow-hidden'
+          }
           style={{ background: store.theme === 'light' ? '#fff' : store.theme === 'eink' ? '#f0ede6' : '#111115', borderColor: 'rgba(255,255,255,0.07)' }}>
           {/* Logo */}
           <div className="p-3 border-b flex items-center justify-between" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
@@ -1340,18 +1354,21 @@ export default function VoxPDFv4() {
 
           {/* Tabs */}
           <Tabs value={store.sidebarTab} onValueChange={store.setSidebarTab} className="flex-1 flex flex-col overflow-hidden">
-            <TabsList className="grid grid-cols-11 p-0 h-8 rounded-none border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
-              <TabsTrigger value="recents" className="text-[9px] h-8 rounded-none" title="Recientes"><BookOpen className="h-3 w-3" /></TabsTrigger>
-              <TabsTrigger value="toc" className="text-[9px] h-8 rounded-none" title="Índice"><Layers /></TabsTrigger>
-              <TabsTrigger value="bookmarks" className="text-[9px] h-8 rounded-none" title="Marcadores"><BookmarkIcon className="h-3 w-3" /></TabsTrigger>
-              <TabsTrigger value="qa" className="text-[9px] h-8 rounded-none" title="Q&A"><MessageCircle className="h-3 w-3" /></TabsTrigger>
-              <TabsTrigger value="quiz" className="text-[9px] h-8 rounded-none" title="Quiz"><HelpCircle className="h-3 w-3" /></TabsTrigger>
-              <TabsTrigger value="citations" className="text-[9px] h-8 rounded-none" title="Citas"><Quote className="h-3 w-3" /></TabsTrigger>
-              <TabsTrigger value="analysis" className="text-[9px] h-8 rounded-none" title="Análisis"><BarChart3 className="h-3 w-3" /></TabsTrigger>
-              <TabsTrigger value="audio" className="text-[9px] h-8 rounded-none" title="Audio"><Headphones className="h-3 w-3" /></TabsTrigger>
-              <TabsTrigger value="tools" className="text-[9px] h-8 rounded-none" title="Herramientas"><Brain /></TabsTrigger>
-              <TabsTrigger value="toolspanel" className="text-[9px] h-8 rounded-none" title="Tools"><ScanLine className="h-3 w-3" /></TabsTrigger>
-              <TabsTrigger value="settings" className="text-[9px] h-8 rounded-none" title="Ajustes"><Settings className="h-3 w-3" /></TabsTrigger>
+            <TabsList
+              className="flex overflow-x-auto p-0 h-10 rounded-none border-b gap-0 flex-shrink-0 no-scrollbar"
+              style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+            >
+              <TabsTrigger value="recents" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Recientes"><BookOpen className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="toc" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Índice"><Layers className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="bookmarks" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Marcadores"><BookmarkIcon className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="qa" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Q&A"><MessageCircle className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="quiz" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Quiz"><HelpCircle className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="citations" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Citas"><Quote className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="analysis" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Análisis"><BarChart3 className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="audio" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Audio"><Headphones className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="tools" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Herramientas"><Brain className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="toolspanel" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Tools"><ScanLine className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="settings" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Ajustes"><Settings className="h-3.5 w-3.5" /></TabsTrigger>
             </TabsList>
 
             {/* Recents Tab */}
@@ -2288,14 +2305,14 @@ export default function VoxPDFv4() {
       {/* ══ MAIN CONTENT ══ */}
       <main className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Top Bar */}
-        <header className="h-12 border-b flex items-center gap-2 px-3 flex-shrink-0"
+        <header className={isMobile ? "h-14 border-b flex items-center gap-1 px-2 flex-shrink-0" : "h-12 border-b flex items-center gap-2 px-3 flex-shrink-0"}
           style={{ background: store.theme === 'light' ? '#fff' : store.theme === 'eink' ? '#f0ede6' : '#111115', borderColor: 'rgba(255,255,255,0.07)' }}>
           {!effectiveSidebarOpen && (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => store.setSidebarOpen(true)}>
+            <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={() => store.setSidebarOpen(true)}>
               <PanelLeftOpen className="h-4 w-4" />
             </Button>
           )}
-          <div className="flex-1 text-[11px] font-semibold truncate opacity-60">{store.fileName || 'VoxPDF v4'}</div>
+          <div className={isMobile ? "flex-1 text-[12px] font-semibold truncate opacity-60 min-w-0" : "flex-1 text-[11px] font-semibold truncate opacity-60"}>{store.fileName || 'VoxPDF v4'}</div>
 
           {/* Search */}
           {searchOpen && (
@@ -2308,102 +2325,105 @@ export default function VoxPDFv4() {
                 onChange={(e) => { store.setSearchQuery(e.target.value); performSearch(e.target.value); }}
                 autoFocus />
               {store.searchHits.length > 0 && <span className="text-[9px] opacity-40">{store.searchCurrentIdx + 1}/{store.searchHits.length}</span>}
-              <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={() => setSearchOpen(false)}>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setSearchOpen(false)}>
                 <X className="h-3 w-3" />
               </Button>
             </div>
           )}
 
-          {/* Status pills */}
-          {store.playing && (
+          {/* Status pills — hide most on mobile to save space */}
+          {!isMobile && store.playing && (
             <div className="flex items-center gap-0.5">
               {[5, 10, 14, 10, 5].map((h, i) => (
                 <div key={i} className="w-[3px] rounded-sm animate-pulse" style={{ height: h, background: accentColor, animationDelay: `${i * 0.1}s` }} />
               ))}
             </div>
           )}
-          {store.pomodoro.mode !== 'idle' && (
+          {!isMobile && store.pomodoro.mode !== 'idle' && (
             <Badge variant="outline" className="text-[9px] h-5" style={{ borderColor: store.pomodoro.mode === 'work' ? '#e05252' : '#52c87a', color: store.pomodoro.mode === 'work' ? '#e05252' : '#52c87a' }}>
               <Timer className="h-2 w-2 mr-1" />{formatTime(store.pomodoro.timeLeft)}
             </Badge>
           )}
-          {store.sleepTimerMinutes > 0 && (
+          {!isMobile && store.sleepTimerMinutes > 0 && (
             <Badge variant="outline" className="text-[9px] h-5" style={{ borderColor: '#f5a623', color: '#f5a623' }}>
               <Moon className="h-2 w-2 mr-1" />{formatTime(store.sleepTimerRemaining)}
             </Badge>
           )}
-          {store.voiceControlActive && (
+          {!isMobile && store.voiceControlActive && (
             <Badge variant="outline" className="text-[9px] h-5" style={{ borderColor: '#52c87a', color: '#52c87a' }}>
               <Mic className="h-2 w-2 mr-1" />Voz
             </Badge>
           )}
-          {store.roomId && (
+          {!isMobile && store.roomId && (
             <Badge variant="outline" className="text-[9px] h-5 cursor-pointer" onClick={() => setShowRoomModal(true)}>
               <Users className="h-2 w-2 mr-1" />{store.roomId}
             </Badge>
           )}
 
-          {/* Top bar buttons */}
-          <TooltipProvider>
-            <Tooltip><TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSearchOpen(!searchOpen)}>
-                <Search className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger><TooltipContent>Buscar (Ctrl+F)</TooltipContent></Tooltip>
+          {/* Top bar buttons — horizontally scrollable on mobile to prevent overflow */}
+          <div className={isMobile ? "flex items-center gap-1 overflow-x-auto no-scrollbar flex-shrink-0" : "contents"}>
+            <TooltipProvider>
+              <Tooltip><TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={() => setSearchOpen(!searchOpen)}>
+                  <Search className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger><TooltipContent>Buscar (Ctrl+F)</TooltipContent></Tooltip>
 
-            <Tooltip><TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={addBookmarkAtCurrent}>
-                <BookmarkIcon className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger><TooltipContent>Marcador (B)</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={addBookmarkAtCurrent}>
+                  <BookmarkIcon className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger><TooltipContent>Marcador (B)</TooltipContent></Tooltip>
 
-            <Tooltip><TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowRSVP(true)}>
-                <Zap className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger><TooltipContent>RSVP Speed Reading (R)</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={() => setShowRSVP(true)}>
+                  <Zap className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger><TooltipContent>RSVP Speed Reading (R)</TooltipContent></Tooltip>
 
-            <Tooltip><TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={store.voiceControlActive ? stopVoiceControl : startVoiceControl}>
-                {store.voiceControlActive ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-              </Button>
-            </TooltipTrigger><TooltipContent>Control por voz</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={store.voiceControlActive ? stopVoiceControl : startVoiceControl}>
+                  {store.voiceControlActive ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                </Button>
+              </TooltipTrigger><TooltipContent>Control por voz</TooltipContent></Tooltip>
 
-            <Tooltip><TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowTeleprompter(true)}>
-                <Maximize className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger><TooltipContent>Teleprompter</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={() => setShowTeleprompter(true)}>
+                  <Maximize className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger><TooltipContent>Teleprompter</TooltipContent></Tooltip>
 
-            <Tooltip><TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => store.setParallelView(!store.parallelView)}>
-                <Columns2 className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger><TooltipContent>Vista paralela</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={() => store.setParallelView(!store.parallelView)}>
+                  <Columns2 className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger><TooltipContent>Vista paralela</TooltipContent></Tooltip>
 
-            <Tooltip><TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={store.pomodoro.mode === 'idle' ? startPomodoro : stopPomodoro}>
-                <Timer className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger><TooltipContent>Pomodoro</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={store.pomodoro.mode === 'idle' ? startPomodoro : stopPomodoro}>
+                  <Timer className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger><TooltipContent>Pomodoro</TooltipContent></Tooltip>
 
-            <Tooltip><TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => store.setSleepTimerMinutes(store.sleepTimerMinutes ? 0 : 25)}>
-                <Moon className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger><TooltipContent>Sleep Timer</TooltipContent></Tooltip>
-          </TooltipProvider>
+              <Tooltip><TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={() => store.setSleepTimerMinutes(store.sleepTimerMinutes ? 0 : 25)}>
+                  <Moon className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger><TooltipContent>Sleep Timer</TooltipContent></Tooltip>
+            </TooltipProvider>
+          </div>
         </header>
 
         {/* Content Area */}
         <div className="flex-1 overflow-hidden flex">
-          {/* ── Mini-map sidebar ── */}
-          <div className="w-[32px] border-r flex flex-col relative flex-shrink-0"
-            style={{ background: store.theme === 'light' ? '#f2f1f8' : '#0a0a0c', borderColor: 'rgba(255,255,255,0.07)' }}>
-            <div className="relative flex-1" onClick={(e) => {
-              const pct = e.nativeEvent.offsetY / e.currentTarget.offsetHeight;
-              jumpTo(Math.floor(pct * store.paragraphs.length));
-            }}>
+          {/* ── Mini-map sidebar — hidden on mobile (too narrow to tap) ── */}
+          {!isMobile && (
+            <div className="w-[32px] border-r flex flex-col relative flex-shrink-0"
+              style={{ background: store.theme === 'light' ? '#f2f1f8' : '#0a0a0c', borderColor: 'rgba(255,255,255,0.07)' }}>
+              <div className="relative flex-1" onClick={(e) => {
+                const pct = e.nativeEvent.offsetY / e.currentTarget.offsetHeight;
+                jumpTo(Math.floor(pct * store.paragraphs.length));
+              }}>
               {/* Progress indicator */}
               <div className="absolute w-full top-0" style={{
                 height: `${store.pageProgress * 100}%`,
@@ -2426,6 +2446,7 @@ export default function VoxPDFv4() {
             </div>
             <div className="text-[7px] opacity-30 text-center py-1">{Math.round(store.pageProgress * 100)}%</div>
           </div>
+          )}
 
           {/* ── Main reader ── */}
           <div className={store.splitView ? 'flex-1 overflow-y-auto' : 'flex-1 overflow-y-auto'} ref={contentRef}
@@ -2438,7 +2459,7 @@ export default function VoxPDFv4() {
               if (files.length) loadFileObj(files[0]);
             }}
             onMouseUp={handleTextSelection}
-            style={{ padding: '18px 20px', paddingBottom: store.parallelView ? '120px' : '100px', ...(store.focusModeType === 'narrowColumn' ? { maxWidth: '500px', margin: '0 auto' } : {}) }}>
+            style={{ padding: isMobile ? '12px 14px' : '18px 20px', paddingBottom: store.parallelView ? '120px' : '100px', ...(store.focusModeType === 'narrowColumn' ? { maxWidth: '500px', margin: '0 auto' } : {}) }}>
 
             {/* Drop zone */}
             {!store.paragraphs.length && !cbzImages.length && (
@@ -2479,7 +2500,7 @@ export default function VoxPDFv4() {
 
             {/* Document viewer - parallel view */}
             {store.parallelView && store.paragraphs.length > 0 && (
-              <div className="grid grid-cols-2 gap-4 max-w-[1200px] mx-auto">
+              <div className={(isMobile ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-2 gap-4') + ' max-w-[1200px] mx-auto'}>
                 {/* Left: Text */}
                 <div className="space-y-2">
                   {renderedParas.map((p) => (
@@ -2534,12 +2555,12 @@ export default function VoxPDFv4() {
 
             {/* Document viewer - normal view */}
             {!store.parallelView && store.paragraphs.length > 0 && cbzImages.length === 0 && (
-              <div className={store.splitView ? 'flex gap-4' : ''}>
-                <div className={store.splitView ? 'w-1/2' : 'max-w-[700px] mx-auto space-y-4'}>
+              <div className={store.splitView ? (isMobile ? 'flex flex-col gap-2' : 'flex gap-4') : ''}>
+                <div className={store.splitView ? (isMobile ? 'w-full' : 'w-1/2') : 'max-w-[700px] mx-auto space-y-4'}>
                   {renderedParas
                     .filter((_, i) => store.focusModeType !== 'lineByLine' || i === store.focusLineIdx)
                     .map((p) => (
-                  <div key={p.origIdx} className={`rounded-xl p-6 ${store.einkOptimized ? 'shadow-none border' : 'border'}`}
+                  <div key={p.origIdx} className={`rounded-xl ${isMobile ? 'p-3' : 'p-6'} ${store.einkOptimized ? 'shadow-none border' : 'border'}`}
                     style={{
                       background: store.theme === 'light' ? '#fff' : store.theme === 'eink' ? '#f8f6f0' : '#111115',
                       borderColor: 'rgba(255,255,255,0.07)',
@@ -2616,7 +2637,7 @@ export default function VoxPDFv4() {
                 </div>
                 {/* Split View second document */}
                 {store.splitView && store.splitDocParagraphs.length > 0 && (
-                  <div className="w-1/2 overflow-y-auto border-l pl-4 space-y-2" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+                  <div className={(isMobile ? 'w-full border-t pt-3 mt-3' : 'w-1/2 border-l pl-4') + ' overflow-y-auto space-y-2'} style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
                     <p className="text-xs font-semibold mb-2">{store.splitDocName}</p>
                     {store.splitDocParagraphs.map((p, i) => (
                       <p key={i} className="text-sm mb-2 leading-relaxed">{p.text}</p>
@@ -2627,14 +2648,14 @@ export default function VoxPDFv4() {
             )}
           </div>
 
-          {/* ── Mind Map Panel ── */}
-          {showMindMap && store.mindMap && (
+          {/* ── Mind Map Panel — hidden inline on mobile, use the modal trigger instead ── */}
+          {showMindMap && store.mindMap && !isMobile && (
             <div className="w-[280px] border-l overflow-y-auto flex-shrink-0 p-3"
               style={{ background: store.theme === 'light' ? '#fff' : '#111115', borderColor: 'rgba(255,255,255,0.07)' }}>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[11px] font-semibold">Mapa Mental</span>
-                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setShowMindMap(false)}>
-                  <X className="h-3 w-3" />
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowMindMap(false)}>
+                  <X className="h-3.5 w-3.5" />
                 </Button>
               </div>
               <MindMapTree node={store.mindMap} onSelect={(id) => {
@@ -2651,55 +2672,65 @@ export default function VoxPDFv4() {
         {store.paragraphs.length > 0 && (
           <div ref={playerRef} className="border-t flex-shrink-0"
             style={{ background: store.theme === 'light' ? '#fff' : store.theme === 'eink' ? '#f0ede6' : '#111115', borderColor: 'rgba(255,255,255,0.07)' }}>
-            {/* Progress bar */}
-            <div className="h-1 cursor-pointer" style={{ background: 'rgba(255,255,255,0.05)' }}
+            {/* Progress bar — taller on mobile for touch */}
+            <div className={isMobile ? "h-2 cursor-pointer" : "h-1 cursor-pointer"} style={{ background: 'rgba(255,255,255,0.05)' }}
               onClick={(e) => {
                 const pct = e.nativeEvent.offsetX / e.currentTarget.offsetWidth;
                 jumpTo(Math.floor(pct * store.paragraphs.length));
               }}>
               <div className="h-full transition-all" style={{ width: `${store.pageProgress * 100}%`, background: accentColor }} />
             </div>
-            <div className="flex items-center gap-2 px-3 py-2">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={prevPara}>
+            <div className={isMobile ? "flex items-center gap-1 px-2 py-2" : "flex items-center gap-2 px-3 py-2"}>
+              <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={prevPara}>
                 <SkipBack className="h-3.5 w-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {/* skip -10s */}}>
-                <RotateCcw className="h-3.5 w-3.5" />
+              {/* Skip -10s — hide on mobile to save space */}
+              {!isMobile && (
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {/* skip -10s */}}>
+                  <RotateCcw className="h-3.5 w-3.5" />
+                </Button>
+              )}
+              <Button className={isMobile ? "h-12 w-12 rounded-full flex-shrink-0" : "h-9 w-9 rounded-full"} style={{ background: accentColor }} onClick={togglePlay}>
+                {store.playing ? <Pause className={isMobile ? "h-5 w-5 text-white" : "h-4 w-4 text-white"} /> : <Play className={isMobile ? "h-5 w-5 text-white" : "h-4 w-4 text-white"} />}
               </Button>
-              <Button className="h-9 w-9 rounded-full" style={{ background: accentColor }} onClick={togglePlay}>
-                {store.playing ? <Pause className="h-4 w-4 text-white" /> : <Play className="h-4 w-4 text-white" />}
-              </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {/* skip +10s */}}>
-                <RefreshCw className="h-3.5 w-3.5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={nextPara}>
+              {/* Skip +10s — hide on mobile */}
+              {!isMobile && (
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {/* skip +10s */}}>
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </Button>
+              )}
+              <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={nextPara}>
                 <SkipForward className="h-3.5 w-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => stopReading()}>
+              <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={() => stopReading()}>
                 <Square className="h-3 w-3" />
               </Button>
 
-              <div className="flex-1 text-center">
-                <div className="text-[11px] font-semibold truncate">{store.fileName}</div>
+              <div className="flex-1 text-center min-w-0">
+                <div className={isMobile ? "text-[11px] font-semibold truncate" : "text-[11px] font-semibold truncate"}>{store.fileName}</div>
                 <div className="text-[9px] opacity-40">
                   Párrafo {store.currentParaIdx + 1}/{store.paragraphs.length} · p.{store.paragraphs[store.currentParaIdx]?.page || '-'}
                 </div>
               </div>
 
-              {/* Speed buttons */}
-              <div className="flex gap-0.5">
-                {[1, 1.5, 2].map(s => (
-                  <Button key={s} variant={store.rate === s ? 'default' : 'outline'}
-                    size="sm" className="text-[9px] h-6 px-2"
-                    style={store.rate === s ? { background: accentColor } : {}}
-                    onClick={() => store.setRate(s)}>
-                    {s}×
-                  </Button>
-                ))}
-              </div>
-              <span className="text-[9px] opacity-30 min-w-[40px] text-right">
-                {formatTime(Math.round((store.paragraphs.length - store.currentParaIdx) * 12 / (store.rate * 3)))}
-              </span>
+              {/* Speed buttons — hide on mobile, use the Audio tab in sidebar instead */}
+              {!isMobile && (
+                <div className="flex gap-0.5">
+                  {[1, 1.5, 2].map(s => (
+                    <Button key={s} variant={store.rate === s ? 'default' : 'outline'}
+                      size="sm" className="text-[9px] h-6 px-2"
+                      style={store.rate === s ? { background: accentColor } : {}}
+                      onClick={() => store.setRate(s)}>
+                      {s}×
+                    </Button>
+                  ))}
+                </div>
+              )}
+              {!isMobile && (
+                <span className="text-[9px] opacity-30 min-w-[40px] text-right">
+                  {formatTime(Math.round((store.paragraphs.length - store.currentParaIdx) * 12 / (store.rate * 3)))}
+                </span>
+              )}
             </div>
           </div>
         )}
@@ -2779,7 +2810,7 @@ export default function VoxPDFv4() {
       {/* Mind Map Modal */}
       {showMindMap && !store.mindMap && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur flex items-center justify-center">
-          <div className="w-[500px] rounded-xl border bg-card p-6">
+          <div className="w-full max-w-[500px] mx-4 rounded-xl border bg-card p-6">
             <div className="font-semibold text-sm mb-2">Mapa Mental</div>
               <div className="text-[11px] opacity-40 text-center py-8">Carga un documento primero para generar el mapa mental</div>
               <Button variant="outline" onClick={() => setShowMindMap(false)}>Cerrar</Button>
