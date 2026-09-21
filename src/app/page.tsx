@@ -12,7 +12,7 @@ import {
   Sparkles, Download, Copy,
   PanelLeftClose, PanelLeftOpen, FileText,
   Moon,
-  ScanLine, MessageCircle, GitCompare, HelpCircle, Quote, ListChecks, Table2, BarChart3, TrendingUp, Smile, Frown, Meh, Share2, Languages as LangIcon, Calendar, SplitSquareVertical, Headphones, Radio, Volume2, Subtitles, Globe as GlobeIcon, CloudDownload, Target, ChevronRight, ChevronLeft
+  ScanLine, MessageCircle, GitCompare, HelpCircle, Quote, ListChecks, Table2, BarChart3, TrendingUp, Smile, Frown, Meh, Share2, Languages as LangIcon, Calendar, SplitSquareVertical, Headphones, Radio, Volume2, Subtitles, Globe as GlobeIcon, CloudDownload, Target, ChevronRight, ChevronLeft, ClipboardPaste
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -1362,6 +1362,9 @@ export default function VoxPDFv4() {
               <Button variant="outline" className="w-full mb-2 text-[11px]" onClick={() => { store.setSidebarTab('toolspanel'); setTimeout(() => document.getElementById('readurl-input')?.focus(), 150); }}>
                 <Volume2 className="h-3 w-3 mr-1" /> Leer URL en voz alta
               </Button>
+              <Button variant="outline" className="w-full mb-2 text-[11px]" onClick={() => { store.setSidebarTab('toolspanel'); setTimeout(() => document.getElementById('paste-text-input')?.focus(), 150); }}>
+                <ClipboardPaste className="h-3 w-3 mr-1" /> Pegar texto para leer
+              </Button>
               <div className="text-[9px] opacity-40 uppercase tracking-wider mb-1 px-1">Archivos recientes</div>
               {getRecents().map((r: any, i: number) => (
                 <div key={i} className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:opacity-80 text-[11px]"
@@ -2180,6 +2183,63 @@ export default function VoxPDFv4() {
                       store.setWebClipLoading(false);
                     }} disabled={store.webClipLoading}>
                       {store.webClipLoading ? 'Descargando página...' : '🔊 Cargar y Leer'}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Pegar Texto para Leer */}
+                <div className="p-2 border rounded border-primary/40">
+                  <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><ClipboardPaste className="h-3 w-3 text-primary" /> Pegar Texto para Leer</h4>
+                  <div className="space-y-1">
+                    <textarea
+                      id="paste-text-input"
+                      placeholder="Pega aquí cualquier texto: artículo, correo, apuntes, guion..."
+                      className="w-full text-xs p-1.5 border rounded bg-transparent min-h-[100px] resize-y"
+                      onInput={(e) => {
+                        const txt = (e.target as HTMLTextAreaElement).value || '';
+                        const wc = txt.trim() ? txt.trim().split(/\s+/).length : 0;
+                        const est = Math.max(1, Math.ceil(wc / 150));
+                        const hint = document.getElementById('paste-text-hint');
+                        if (hint) hint.textContent = `${wc} palabras · ~${est} min`;
+                      }}
+                    />
+                    <div id="paste-text-hint" className="text-[10px] text-muted-foreground">0 palabras · ~0 min</div>
+                    <Button id="paste-text-go" size="sm" className="w-full text-xs" onClick={() => {
+                      const raw = (document.getElementById('paste-text-input') as HTMLTextAreaElement)?.value || '';
+                      if (!raw.trim()) { toast({ title: 'Pega texto primero' }); return; }
+                      stopReading(true);
+                      // Split into paragraphs: blank lines first, then single newlines, then sentences
+                      let paras: string[] = [];
+                      const blankSplit = raw.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+                      if (blankSplit.length >= 2) {
+                        paras = blankSplit;
+                      } else {
+                        const lineSplit = raw.split(/\n+/).map(s => s.trim()).filter(s => s.length > 0);
+                        if (lineSplit.length >= 2) {
+                          paras = lineSplit;
+                        } else {
+                          // single block: split by sentence end
+                          paras = raw.replace(/\s+/g, ' ').trim().split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡])/).filter(s => s.length > 0);
+                        }
+                      }
+                      // Clean each paragraph (strip extra whitespace)
+                      paras = paras.map(p => p.replace(/\s+/g, ' ').trim()).filter(p => p.length > 0);
+                      if (!paras.length) { toast({ title: 'No hay texto válido' }); return; }
+                      const wc = paras.join(' ').split(/\s+/).length;
+                      const est = Math.ceil(wc / 150);
+                      const paraObjs = paras.map((txt, j) => ({ text: txt, page: 1 + Math.floor(j / 20), isHeader: false, isFooter: false }));
+                      // Use first ~60 chars of first paragraph as label
+                      const firstLine = paras[0].slice(0, 50) + (paras[0].length > 50 ? '…' : '');
+                      store.setFileName(`📝 ${firstLine}`);
+                      store.setParagraphs(paraObjs);
+                      store.setTotalPages(Math.ceil(paraObjs.length / 20));
+                      store.setCurrentParaIdx(0);
+                      buildTOC(); computeWordFrequency(); computeMindMap();
+                      addRecent(`📝 ${firstLine}`, 0);
+                      toast({ title: 'Texto cargado', description: `${wc} palabras · ~${est} min. Reproduciendo...` });
+                      setTimeout(() => startReading(0), 400);
+                    }}>
+                      🔊 Leer Texto
                     </Button>
                   </div>
                 </div>
