@@ -237,3 +237,33 @@ Stage Summary:
 - Sits in the Tools tab, right below "Leer URL en Voz Alta", with matching accent-color border.
 - Quick-access shortcut also in sidebar Recents tab.
 - Uses same TTS pipeline as URL/PDF/OCR readers: starts reading immediately after load.
+
+---
+Task ID: 10
+Agent: Main Agent
+Task: Improve mobile view (responsive layout overhaul)
+
+Work Log:
+- Audited src/app/page.tsx (~2965 lines) via Explore agent: confirmed ZERO Tailwind breakpoints anywhere, ZERO useMediaQuery/innerWidth/mobile detection, sidebar fixed 280px on a 375px phone, 11-tab grid in sidebar was 25px wide per cell, touch targets as small as 16-24px, mind-map modal 500px → horizontal scroll on mobile.
+- Imported existing `useIsMobile` hook from `@/hooks/use-mobile` (already in repo, 768px breakpoint).
+- Sidebar → mobile drawer: on mobile renders as `fixed inset-y-0 left-0 z-50 w-[85vw] max-w-[320px] shadow-2xl`, plus a `fixed inset-0 bg-black/50 backdrop-blur-sm` backdrop that closes the sidebar on tap.
+- Sidebar Tabs: replaced `grid grid-cols-11` with `flex overflow-x-auto no-scrollbar h-10` (40px touch target, 11px taller, horizontal-scrollable). Added `.no-scrollbar` utility to globals.css.
+- Top header: on mobile bumped to `h-14` (56px), wrapped 8 icon buttons in `flex overflow-x-auto no-scrollbar flex-shrink-0` so they scroll horizontally instead of overflowing. Hidden the playing-bars visualizer, pomodoro/sleep/voice/room status pills on mobile to save horizontal space. Touch targets: `h-9 w-9` on mobile (was h-7).
+- Mini-map (32px sidebar): hidden on mobile entirely (too narrow to tap, wastes space).
+- Mind Map inline panel (280px side): hidden on mobile, falls back to modal trigger.
+- Reader padding: `12px 14px` on mobile vs `18px 20px` desktop (more reading area).
+- Paragraph cards: `p-3` on mobile vs `p-6` desktop (less wasted space).
+- Parallel view: stacks to 1 column on mobile (`grid-cols-1`).
+- Split view: stacks vertically (`flex-col`) on mobile with `border-t pt-3 mt-3` divider.
+- Bottom player bar: progress bar `h-2` on mobile (was h-1) for easier touch-seek. Play button `h-12 w-12` on mobile (was h-9). All transport buttons `h-9 w-9`. Hidden the -10s/+10s skip buttons, speed buttons (1x/1.5x/2x), and time-remaining on mobile — accessible from sidebar Audio tab.
+- Mind Map modal: `w-[500px]` → `w-full max-w-[500px] mx-4` to fit 375px screens.
+
+Bug found & fixed during mobile deploy verification:
+- The mensajerosdivinos URL started returning only 2 paragraphs / 27 words instead of the expected 22 / 823. Diagnosis: r.jina.ai blocked our Vercel IP for "bad IP reputation" (HTTP 401), AND when it returned 200, the body was a Cloudflare "Just a moment..." / "Performing security verification" stub that our extraction logic was treating as real article content. Since 2 paragraphs > our threshold (>=1), jina "succeeded" and the cascade never fell through to Wayback Machine where the real article snapshot lives.
+- Added `BOT_WALL_PATTERNS` regex list + `looksLikeBotWall(text)` helper. Applied at the end of `tryDirect`, `tryJina`, and `tryWayback` to reject any response that looks like a Cloudflare/bot-protection challenge page.
+- Raised Wayback Machine timeouts: 10s → 12s for availability API, 20s → 25s for snapshot fetch (archive.org is often slow).
+- Verified post-deploy: mensajerosdivinos URL returns HTTP 200, source='archivo', 22 paragraphs, 823 words in ~11s. ✓
+
+Stage Summary:
+- Mobile responsive overhaul live on https://text2voice3.vercel.app. Key improvements: drawer sidebar, scrollable tab strip & header buttons, mobile-friendly player bar with big play button, stacked parallel/split views, fixed mind-map modal overflow.
+- Also fixed a critical regression in fetch-url (jina.ai bot-wall detection) that was returning Cloudflare stub content as article text. The mensajerosdivinos URL now works correctly again.
