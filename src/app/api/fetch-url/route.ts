@@ -18,6 +18,34 @@ function latinRatio(s: string): number {
   return total > 0 ? letters.length / total : 0;
 }
 
+/**
+ * Detects Cloudflare / bot-protection challenge pages that look like real
+ * content but are actually security stubs. These pages return HTTP 200 with
+ * a short body like "Just a moment..." / "Performing security verification"
+ * / "Verifying you are not a bot" / "Checking your browser".
+ *
+ * Without this check, jina.ai passes the security stub up to the cascade as
+ * if it were real article content, blocking the Wayback fallback.
+ */
+const BOT_WALL_PATTERNS = [
+  /just a moment/i,
+  /performing security verification/i,
+  /verifying you (are|that you are) not (a bot|a robot)/i,
+  /checking your browser/i,
+  /attention required.{0,30}cloudflare/i,
+  /cloudflare.{0,30}(security|ray id|incident id)/i,
+  /enable javascript and cookies/i,
+  /this page uses javascript/i,
+  /please (verify|complete the security check)/i,
+  /ddos protection by/i,
+];
+
+function looksLikeBotWall(text: string): boolean {
+  if (!text) return false;
+  const sample = text.slice(0, 2000);
+  return BOT_WALL_PATTERNS.some(re => re.test(sample));
+}
+
 function cleanText(s: string): string {
   return s
     .replace(/<script[\s\S]*?<\/script>/gi, '')
@@ -154,12 +182,15 @@ async function tryDirect(url: string): Promise<{ title: string; paragraphs: stri
   const contentType = res.headers.get('content-type') || '';
   if (contentType.includes('text/html') || contentType.includes('application/xhtml')) {
     const html = await res.text();
+    // Reject Cloudflare/bot-protection challenge pages
+    if (looksLikeBotWall(html)) throw new Error('bot-wall');
     const { title, paragraphs } = extractFromHtml(html, '');
     if (paragraphs.length < 2) throw new Error('no-text');
     return { title, paragraphs };
   }
   if (contentType.startsWith('text/')) {
     const text = await res.text();
+    if (looksLikeBotWall(text)) throw new Error('bot-wall');
     const paragraphs = text.split(/\n\s*\n/).map(s => cleanText(s)).filter(s => s.length > 20).slice(0, 300);
     if (paragraphs.length < 1) throw new Error('no-text');
     return { title: url, paragraphs };
@@ -184,6 +215,12 @@ async function tryJina(url: string, timeoutMs: number): Promise<{ title: string;
   if (!res.ok) throw new Error(`proxy HTTP ${res.status}`);
   const raw = await res.text();
 
+  // Reject Cloudflare/bot-protection challenge stubs that jina.ai passes
+  // through as 200 with "Just a moment..." / "Performing security verification"
+  // bodies. Otherwise the cascade treats the stub as real content and never
+  // falls through to Wayback.
+  if (looksLikeBotWall(raw)) throw new Error('proxy bot-wall');
+
   // Jina returns: "Title: ...\n\nURL Source: ...\n\nMarkdown Content:\n<body>"
   const titleMatch = raw.match(/^Title:\s*(.+)$/m);
   const title = titleMatch ? titleMatch[1].trim() : '';
@@ -205,9 +242,10 @@ async function tryJina(url: string, timeoutMs: number): Promise<{ title: string;
 
 /** Strategy 3: Wayback Machine archived snapshot — tries multiple recent snapshots */
 async function tryWayback(url: string, timeoutMs: number): Promise<{ title: string; paragraphs: string[] }> {
+  // Availability API often slow — give it up to 12s
   const avRes = await fetch(
     `https://archive.org/wayback/available?url=${encodeURIComponent(url)}`,
-    { signal: AbortSignal.timeout(Math.min(10000, timeoutMs)) },
+    { signal: AbortSignal.timeout(Math.min(12000, timeoutMs)) },
   );
   if (!avRes.ok) throw new Error(`archive HTTP ${avRes.status}`);
   const av = await avRes.json();
@@ -215,12 +253,16 @@ async function tryWayback(url: string, timeoutMs: number): Promise<{ title: stri
   if (!snap) throw new Error('sin copia archivada');
 
   const snapUrl = snap.startsWith('http') ? snap : `https:${snap}`;
+  // Snapshot fetch — give it up to 25s for slow archive.org responses
   const res = await fetch(snapUrl, {
     redirect: 'follow',
-    signal: AbortSignal.timeout(Math.min(20000, timeoutMs)),
+    signal: AbortSignal.timeout(Math.min(25000, timeoutMs)),
   });
   if (!res.ok) throw new Error(`archive snapshot HTTP ${res.status}`);
   const html = await res.text();
+
+  // Reject archived Cloudflare challenge pages (snapshot taken during an outage)
+  if (looksLikeBotWall(html)) throw new Error('archivo bot-wall');
 
   const { title, paragraphs } = extractFromHtml(html, '');
   // Filter wayback toolbar noise
