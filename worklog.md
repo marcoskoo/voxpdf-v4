@@ -210,3 +210,30 @@ Stage Summary:
 - Direct strategy now tries 3 UAs in sequence: browser-like → minimal → Googlebot. More sites should be reachable without falling through to proxy/archive.
 - Clearer error message guides users toward 3 alternatives when all strategies fail.
 - Production is live with the hardened fetch-url cascade.
+
+---
+Task ID: 9
+Agent: Main Agent
+Task: Add a section where the user can paste text and have it read aloud (TTS)
+
+Work Log:
+- Reviewed existing UI structure: found "Leer URL en Voz Alta" section in Tools tab (line ~2146 of src/app/page.tsx).
+- Added new "Pegar Texto para Leer" section right after URL reader:
+  - Textarea (`#paste-text-input`) with placeholder for articles/emails/notes/scripts
+  - Live word/minute counter updated on input (`#paste-text-hint` shows "X palabras · ~Y min")
+  - "🔊 Leer Texto" button:
+    - Smart paragraph splitting: blank-line-separated → single-newline → sentence-end
+    - Cleans extra whitespace per paragraph
+    - Sets fileName `📝 {first 50 chars}…`, setParagraphs, setTotalPages
+    - Triggers buildTOC, computeWordFrequency, computeMindMap, addRecent
+    - Calls startReading(0) after 400ms (uses fresh-state pattern)
+- Added `ClipboardPaste` to lucide-react imports.
+- Added a quick-access button in sidebar "Recents" tab so users can jump straight to the paste-text area.
+- TypeScript compiles cleanly (no src/ errors). next build successful (22 routes).
+- Committed (c4364bd) and pushed. Auto-deploy verified: production returns HTTP 200 in ~1.2s.
+
+Stage Summary:
+- New "Pegar Texto para Leer" feature is live on https://text2voice3.vercel.app.
+- Sits in the Tools tab, right below "Leer URL en Voz Alta", with matching accent-color border.
+- Quick-access shortcut also in sidebar Recents tab.
+- Uses same TTS pipeline as URL/PDF/OCR readers: starts reading immediately after load.
