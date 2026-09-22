@@ -282,6 +282,8 @@ export default function VoxPDFv4() {
     root.style.setProperty('--border', t.border);
     root.style.setProperty('--input', t.border);
     root.style.setProperty('--ring', t.accent);
+    root.style.setProperty('--accent-solid', t.accent);
+    root.style.setProperty('--accent-tint', `${t.accent}1f`);
     root.style.setProperty('--destructive', '#e05252');
   }, [store.theme]);
 
@@ -289,6 +291,8 @@ export default function VoxPDFv4() {
     loadSettings();
     loadVoices();
     setLoaded(true);
+    // Mobile: start with drawer closed (standard drawer UX — content first)
+    if (window.innerWidth < 768) store.setSidebarOpen(false);
     // Widget embed support: detect embed mode & listen for host messages
     const params = new URLSearchParams(window.location.search);
     if (params.get('embed') === 'true') {
@@ -1495,12 +1499,12 @@ export default function VoxPDFv4() {
           {/* Logo */}
           <div className="px-4 py-3.5 border-b flex items-center justify-between" style={{ borderColor: T.border }}>
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg trans-smooth" style={{ background: accentGradient, boxShadow: `0 4px 12px ${T.accent}40` }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center trans-smooth" style={{ background: accentGradient, boxShadow: `0 4px 14px ${T.accent}45, inset 0 1px 0 rgba(255,255,255,0.28)` }}>
                 <Volume2 className="h-4 w-4" style={{ color: T.accentFg }} />
               </div>
               <div className="flex flex-col">
                 <span className="text-[17px] font-bold tracking-tight leading-none gradient-text" style={{ fontFamily: 'Syne, sans-serif', backgroundImage: accentGradient }}>VoxPDF</span>
-                <span className="text-[9px] opacity-40 leading-none mt-0.5">lee en voz alta · v4</span>
+                <span className="text-[9px] opacity-45 leading-none mt-1 tracking-wide">Lector con voz · GLM</span>
               </div>
             </div>
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg trans-smooth hover:bg-black/5 dark:hover:bg-white/5" onClick={() => store.setSidebarOpen(false)}>
@@ -1508,56 +1512,85 @@ export default function VoxPDFv4() {
             </Button>
           </div>
 
-          {/* Tabs */}
+          {/* Tabs — segmented pill control */}
           <Tabs value={store.sidebarTab} onValueChange={store.setSidebarTab} className="flex-1 flex flex-col overflow-hidden">
-            <TabsList
-              className="flex overflow-x-auto p-0 h-11 rounded-none border-b gap-0 flex-shrink-0 no-scrollbar"
-              style={{ borderColor: T.border }}
-            >
-              <TabsTrigger value="recents" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Recientes"><BookOpen className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="toc" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Índice"><Layers className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="bookmarks" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Marcadores"><BookmarkIcon className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="qa" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Q&A"><MessageCircle className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="quiz" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Quiz"><HelpCircle className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="citations" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Citas"><Quote className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="analysis" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Análisis"><BarChart3 className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="audio" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Audio"><Headphones className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="tools" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Herramientas"><Brain className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="toolspanel" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Tools"><ScanLine className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="settings" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Ajustes"><Settings className="h-3.5 w-3.5" /></TabsTrigger>
-            </TabsList>
+            <div className="px-2 pt-2 pb-2 border-b flex-shrink-0" style={{ borderColor: T.border }}>
+              <TabsList
+                className="flex overflow-x-auto p-1 h-auto rounded-xl gap-0.5 flex-shrink-0 no-scrollbar w-full"
+                style={{ background: T.surface3, border: `1px solid ${T.border}` }}
+              >
+                <TabsTrigger value="recents" className="h-8 w-10 rounded-lg flex-shrink-0 flex items-center justify-center !text-[var(--muted-foreground)] data-[state=active]:!bg-[var(--accent)] data-[state=active]:!text-[var(--accent-solid)] trans-smooth" title="Recientes"><BookOpen className="h-3.5 w-3.5" /></TabsTrigger>
+                <TabsTrigger value="toc" className="h-8 w-10 rounded-lg flex-shrink-0 flex items-center justify-center !text-[var(--muted-foreground)] data-[state=active]:!bg-[var(--accent)] data-[state=active]:!text-[var(--accent-solid)] trans-smooth" title="Índice"><Layers className="h-3.5 w-3.5" /></TabsTrigger>
+                <TabsTrigger value="bookmarks" className="h-8 w-10 rounded-lg flex-shrink-0 flex items-center justify-center !text-[var(--muted-foreground)] data-[state=active]:!bg-[var(--accent)] data-[state=active]:!text-[var(--accent-solid)] trans-smooth" title="Marcadores"><BookmarkIcon className="h-3.5 w-3.5" /></TabsTrigger>
+                <TabsTrigger value="qa" className="h-8 w-10 rounded-lg flex-shrink-0 flex items-center justify-center !text-[var(--muted-foreground)] data-[state=active]:!bg-[var(--accent)] data-[state=active]:!text-[var(--accent-solid)] trans-smooth" title="Q&A"><MessageCircle className="h-3.5 w-3.5" /></TabsTrigger>
+                <TabsTrigger value="quiz" className="h-8 w-10 rounded-lg flex-shrink-0 flex items-center justify-center !text-[var(--muted-foreground)] data-[state=active]:!bg-[var(--accent)] data-[state=active]:!text-[var(--accent-solid)] trans-smooth" title="Quiz"><HelpCircle className="h-3.5 w-3.5" /></TabsTrigger>
+                <TabsTrigger value="citations" className="h-8 w-10 rounded-lg flex-shrink-0 flex items-center justify-center !text-[var(--muted-foreground)] data-[state=active]:!bg-[var(--accent)] data-[state=active]:!text-[var(--accent-solid)] trans-smooth" title="Citas"><Quote className="h-3.5 w-3.5" /></TabsTrigger>
+                <TabsTrigger value="analysis" className="h-8 w-10 rounded-lg flex-shrink-0 flex items-center justify-center !text-[var(--muted-foreground)] data-[state=active]:!bg-[var(--accent)] data-[state=active]:!text-[var(--accent-solid)] trans-smooth" title="Análisis"><BarChart3 className="h-3.5 w-3.5" /></TabsTrigger>
+                <TabsTrigger value="audio" className="h-8 w-10 rounded-lg flex-shrink-0 flex items-center justify-center !text-[var(--muted-foreground)] data-[state=active]:!bg-[var(--accent)] data-[state=active]:!text-[var(--accent-solid)] trans-smooth" title="Audio"><Headphones className="h-3.5 w-3.5" /></TabsTrigger>
+                <TabsTrigger value="tools" className="h-8 w-10 rounded-lg flex-shrink-0 flex items-center justify-center !text-[var(--muted-foreground)] data-[state=active]:!bg-[var(--accent)] data-[state=active]:!text-[var(--accent-solid)] trans-smooth" title="Herramientas"><Brain className="h-3.5 w-3.5" /></TabsTrigger>
+                <TabsTrigger value="toolspanel" className="h-8 w-10 rounded-lg flex-shrink-0 flex items-center justify-center !text-[var(--muted-foreground)] data-[state=active]:!bg-[var(--accent)] data-[state=active]:!text-[var(--accent-solid)] trans-smooth" title="Tools"><ScanLine className="h-3.5 w-3.5" /></TabsTrigger>
+                <TabsTrigger value="settings" className="h-8 w-10 rounded-lg flex-shrink-0 flex items-center justify-center !text-[var(--muted-foreground)] data-[state=active]:!bg-[var(--accent)] data-[state=active]:!text-[var(--accent-solid)] trans-smooth" title="Ajustes"><Settings className="h-3.5 w-3.5" /></TabsTrigger>
+              </TabsList>
+            </div>
 
             {/* Recents Tab */}
-            <TabsContent value="recents" className="flex-1 overflow-y-auto p-2 m-0">
-              <Button className="w-full mb-2 h-10 rounded-xl font-semibold trans-smooth hover:scale-[1.01] active:scale-[0.99] hover:shadow-lg" style={{ background: accentGradient, color: T.accentFg, boxShadow: `0 4px 14px ${T.accent}35` }} onClick={() => fileInputRef.current?.click()}>
-                <Plus className="h-3 w-3 mr-1" /> Abrir archivo
+            <TabsContent value="recents" className="flex-1 overflow-y-auto p-2.5 m-0">
+              <Button className="w-full mb-2 h-11 rounded-xl font-semibold text-[12px] trans-smooth hover:scale-[1.01] active:scale-[0.99]" style={{ background: accentGradient, color: T.accentFg, boxShadow: `0 4px 16px ${T.accent}40` }} onClick={() => fileInputRef.current?.click()}>
+                <FileUp className="h-3.5 w-3.5 mr-1.5" /> Abrir archivo
               </Button>
-              <Button variant="outline" className="w-full mb-2 text-[11px]" onClick={() => { store.setSidebarTab('toolspanel'); setTimeout(() => document.getElementById('readurl-input')?.focus(), 150); }}>
-                <Volume2 className="h-3 w-3 mr-1" /> Leer URL en voz alta
-              </Button>
-              <Button variant="outline" className="w-full mb-2 text-[11px]" onClick={() => { store.setSidebarTab('toolspanel'); setTimeout(() => document.getElementById('paste-text-input')?.focus(), 150); }}>
-                <ClipboardPaste className="h-3 w-3 mr-1" /> Pegar texto para leer
-              </Button>
-              <div className="text-[9px] opacity-40 uppercase tracking-wider mb-1 px-1">Archivos recientes</div>
+              <div className="space-y-1">
+                <button className="w-full flex items-center gap-2.5 p-2 rounded-xl cursor-pointer trans-smooth hover:bg-[var(--accent)] text-left"
+                  onClick={() => { store.setSidebarTab('toolspanel'); setTimeout(() => document.getElementById('readurl-input')?.focus(), 150); }}>
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${accentColor}16`, color: accentColor }}>
+                    <Globe className="h-3.5 w-3.5" />
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-[11.5px] font-medium leading-tight">Leer URL en voz alta</span>
+                    <span className="text-[9px] leading-tight mt-0.5" style={{ color: T.textMuted }}>Artículos y páginas web</span>
+                  </div>
+                  <ChevronRight className="h-3 w-3 opacity-30 flex-shrink-0" />
+                </button>
+                <button className="w-full flex items-center gap-2.5 p-2 rounded-xl cursor-pointer trans-smooth hover:bg-[var(--accent)] text-left"
+                  onClick={() => { store.setSidebarTab('toolspanel'); setTimeout(() => document.getElementById('paste-text-input')?.focus(), 150); }}>
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${accentColor}16`, color: accentColor }}>
+                    <ClipboardPaste className="h-3.5 w-3.5" />
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-[11.5px] font-medium leading-tight">Pegar texto para leer</span>
+                    <span className="text-[9px] leading-tight mt-0.5" style={{ color: T.textMuted }}>Notas, correos, apuntes</span>
+                  </div>
+                  <ChevronRight className="h-3 w-3 opacity-30 flex-shrink-0" />
+                </button>
+              </div>
+              <div className="text-[9px] opacity-40 uppercase tracking-[0.14em] mb-1.5 px-1 mt-4">Archivos recientes</div>
               {getRecents().map((r: any, i: number) => (
-                <div key={i} className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:opacity-80 text-[11px]"
+                <div key={i} className="flex items-center gap-2.5 p-2 rounded-xl cursor-pointer trans-smooth hover:bg-[var(--accent)] text-[11px]"
                   onClick={() => toast({ title: 'Recarga para abrir', description: r.name })}>
-                  <FileText className="h-3 w-3 opacity-50" />
-                  <span className="truncate flex-1">{r.name}</span>
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${accentColor}14`, color: accentColor }}>
+                    <FileText className="h-3.5 w-3.5" />
+                  </div>
+                  <span className="truncate flex-1 font-medium">{r.name}</span>
                 </div>
               ))}
-              {getRecents().length === 0 && <div className="text-[11px] opacity-30 text-center py-4">Sin archivos recientes</div>}
+              {getRecents().length === 0 && (
+                <div className="flex flex-col items-center gap-2 py-8 opacity-50">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center border" style={{ borderColor: T.borderStrong }}>
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <span className="text-[10px]">Aún no hay archivos recientes</span>
+                </div>
+              )}
             </TabsContent>
 
             {/* TOC Tab */}
-            <TabsContent value="toc" className="flex-1 overflow-y-auto p-2 m-0">
+            <TabsContent value="toc" className="flex-1 overflow-y-auto p-2.5 m-0">
               {store.chapters.map((ch, i) => (
-                <div key={i} className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:opacity-80 text-[11px]"
+                <div key={i} className="flex items-center gap-2.5 p-2 rounded-xl cursor-pointer trans-smooth hover:bg-[var(--accent)] text-[11px]"
                   onClick={() => { jumpTo(ch.startIdx); store.setSidebarOpen(false); }}
-                  style={store.currentParaIdx >= ch.startIdx && (i === store.chapters.length - 1 || store.currentParaIdx < store.chapters[i + 1]?.startIdx) ? { background: `${accentColor}15`, color: accentColor } : {}}>
-                  <span className="text-[8px] opacity-40">{i + 1}</span>
+                  style={store.currentParaIdx >= ch.startIdx && (i === store.chapters.length - 1 || store.currentParaIdx < store.chapters[i + 1]?.startIdx) ? { background: `${accentColor}15`, color: accentColor, borderLeft: `2px solid ${accentColor}` } : { borderLeft: '2px solid transparent' }}>
+                  <span className="text-[8px] opacity-40 w-3 text-right flex-shrink-0">{i + 1}</span>
                   <span className="truncate flex-1">{ch.title}</span>
-                  <span className="text-[9px] opacity-30">p.{ch.page}</span>
+                  <span className="text-[9px] opacity-30 flex-shrink-0">p.{ch.page}</span>
                 </div>
               ))}
               {store.chapters.length === 0 && <div className="text-[11px] opacity-30 text-center py-4">Sin capítulos detectados</div>}
@@ -2462,29 +2495,32 @@ export default function VoxPDFv4() {
       <main className="flex-1 flex flex-col overflow-hidden min-w-0 relative z-10">
         {/* Top Bar */}
         <header className={isMobile ? "h-14 border-b flex items-center gap-1 px-2 flex-shrink-0" : "h-12 border-b flex items-center gap-2 px-3 flex-shrink-0"}
-          style={{ background: T.surface, borderColor: T.border, ...glassStyle }}>
+          style={{ background: T.surface, borderColor: T.border, ...glassStyle, boxShadow: '0 1px 2px rgba(0,0,0,0.10), 0 8px 24px rgba(0,0,0,0.10)' }}>
           {!effectiveSidebarOpen && (
-            <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={() => store.setSidebarOpen(true)}>
+            <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-[10px] flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-[10px] trans-smooth"} onClick={() => store.setSidebarOpen(true)}>
               <PanelLeftOpen className="h-4 w-4" />
             </Button>
           )}
           {/* Filename — hidden on mobile (player bar already shows it; frees space for icon row) */}
           {(!isMobile || !store.paragraphs.length) && (
-            <div className={isMobile ? "flex-1 text-[12px] font-semibold truncate opacity-60 min-w-0" : "flex-1 text-[11px] font-semibold truncate opacity-60"}>{store.fileName || 'VoxPDF v4'}</div>
+            <div className={(isMobile ? "flex-1 text-[12px] font-semibold truncate min-w-0" : "flex-1 text-[11px] font-semibold truncate min-w-0") + " flex items-center gap-1.5"} style={{ color: store.fileName ? undefined : T.textMuted }}>
+              {store.fileName && <FileText className="h-3 w-3 opacity-60 flex-shrink-0" />}
+              <span className="truncate">{store.fileName || 'Sin documento · arrastra un PDF para empezar'}</span>
+            </div>
           )}
 
           {/* Search */}
           {searchOpen && (
-            <div className="flex items-center gap-1 flex-1 max-w-xs">
-              <Search className="h-3 w-3 opacity-40" />
-              <input className="flex-1 bg-transparent border-b text-[11px] outline-none py-1"
-                style={{ borderColor: accentColor, boxShadow: `0 1px 0 0 ${accentColor}40` }}
-                placeholder="Buscar…"
+            <div className="flex items-center gap-1.5 flex-1 max-w-xs h-8 px-2.5 rounded-lg trans-smooth"
+              style={{ background: `${accentColor}0d`, border: `1px solid ${accentColor}38` }}>
+              <Search className="h-3 w-3 flex-shrink-0" style={{ color: accentColor }} />
+              <input className="flex-1 bg-transparent text-[11px] outline-none min-w-0"
+                placeholder="Buscar en el documento…"
                 value={store.searchQuery}
                 onChange={(e) => { store.setSearchQuery(e.target.value); performSearch(e.target.value); }}
                 autoFocus />
-              {store.searchHits.length > 0 && <span className="text-[9px] opacity-40">{store.searchCurrentIdx + 1}/{store.searchHits.length}</span>}
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setSearchOpen(false)}>
+              {store.searchHits.length > 0 && <span className="text-[9px] opacity-50 flex-shrink-0">{store.searchCurrentIdx + 1}/{store.searchHits.length}</span>}
+              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 flex-shrink-0" onClick={() => setSearchOpen(false)}>
                 <X className="h-3 w-3" />
               </Button>
             </div>
@@ -2519,54 +2555,66 @@ export default function VoxPDFv4() {
             </Badge>
           )}
 
-          {/* Top bar buttons — horizontally scrollable on mobile to prevent overflow */}
-          <div className={isMobile ? "flex items-center gap-1 overflow-x-auto no-scrollbar flex-shrink-0" : "contents"}>
+          {/* Top bar buttons — grouped clusters with separators; horizontally scrollable on mobile */}
+          <div className={isMobile ? "flex items-center gap-0.5 overflow-x-auto no-scrollbar flex-shrink-0" : "flex items-center gap-1"}>
             <TooltipProvider>
+              {/* ── Group: esenciales ── */}
               <Tooltip><TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={() => setSearchOpen(!searchOpen)}>
-                  <Search className="h-3.5 w-3.5" />
+                <Button variant="ghost" size="icon" className={(isMobile ? "h-9 w-9 flex-shrink-0" : "h-8 w-8") + " rounded-[10px] trans-smooth"} onClick={() => setSearchOpen(!searchOpen)}
+                  style={searchOpen ? { background: `${accentColor}1f`, color: accentColor } : undefined}>
+                  <Search className="h-4 w-4" />
                 </Button>
               </TooltipTrigger><TooltipContent>Buscar (Ctrl+F)</TooltipContent></Tooltip>
 
               <Tooltip><TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={addBookmarkAtCurrent}>
-                  <BookmarkIcon className="h-3.5 w-3.5" />
+                <Button variant="ghost" size="icon" className={(isMobile ? "h-9 w-9 flex-shrink-0" : "h-8 w-8") + " rounded-[10px] trans-smooth"} onClick={addBookmarkAtCurrent}>
+                  <BookmarkIcon className="h-4 w-4" />
                 </Button>
               </TooltipTrigger><TooltipContent>Marcador (B)</TooltipContent></Tooltip>
 
+              <div className="w-px h-4 mx-1 flex-shrink-0" style={{ background: T.borderStrong }} />
+
+              {/* ── Group: modos de lectura ── */}
               <Tooltip><TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={() => setShowRSVP(true)}>
-                  <Zap className="h-3.5 w-3.5" />
+                <Button variant="ghost" size="icon" className={(isMobile ? "h-9 w-9 flex-shrink-0" : "h-8 w-8") + " rounded-[10px] trans-smooth"} onClick={() => setShowRSVP(true)}>
+                  <Zap className="h-4 w-4" />
                 </Button>
-              </TooltipTrigger><TooltipContent>RSVP Speed Reading (R)</TooltipContent></Tooltip>
+              </TooltipTrigger><TooltipContent>Speed Reading RSVP (R)</TooltipContent></Tooltip>
 
               <Tooltip><TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={store.voiceControlActive ? stopVoiceControl : startVoiceControl}>
-                  {store.voiceControlActive ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-                </Button>
-              </TooltipTrigger><TooltipContent>Control por voz</TooltipContent></Tooltip>
-
-              <Tooltip><TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={() => setShowTeleprompter(true)}>
-                  <Maximize className="h-3.5 w-3.5" />
+                <Button variant="ghost" size="icon" className={(isMobile ? "h-9 w-9 flex-shrink-0" : "h-8 w-8") + " rounded-[10px] trans-smooth"} onClick={() => setShowTeleprompter(true)}>
+                  <Maximize className="h-4 w-4" />
                 </Button>
               </TooltipTrigger><TooltipContent>Teleprompter</TooltipContent></Tooltip>
 
               <Tooltip><TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={() => store.setParallelView(!store.parallelView)}>
-                  <Columns2 className="h-3.5 w-3.5" />
+                <Button variant="ghost" size="icon" className={(isMobile ? "h-9 w-9 flex-shrink-0" : "h-8 w-8") + " rounded-[10px] trans-smooth"} onClick={() => store.setParallelView(!store.parallelView)}
+                  style={store.parallelView ? { background: `${accentColor}1f`, color: accentColor } : undefined}>
+                  <Columns2 className="h-4 w-4" />
                 </Button>
               </TooltipTrigger><TooltipContent>Vista paralela</TooltipContent></Tooltip>
 
+              <div className="w-px h-4 mx-1 flex-shrink-0" style={{ background: T.borderStrong }} />
+
+              {/* ── Group: sesión ── */}
               <Tooltip><TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={store.pomodoro.mode === 'idle' ? startPomodoro : stopPomodoro}>
-                  <Timer className="h-3.5 w-3.5" />
+                <Button variant="ghost" size="icon" className={(isMobile ? "h-9 w-9 flex-shrink-0" : "h-8 w-8") + " rounded-[10px] trans-smooth"} onClick={store.voiceControlActive ? stopVoiceControl : startVoiceControl}
+                  style={store.voiceControlActive ? { background: 'rgba(82,200,122,0.18)', color: '#52c87a' } : undefined}>
+                  {store.voiceControlActive ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger><TooltipContent>Control por voz</TooltipContent></Tooltip>
+
+              <Tooltip><TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className={(isMobile ? "h-9 w-9 flex-shrink-0" : "h-8 w-8") + " rounded-[10px] trans-smooth"} onClick={store.pomodoro.mode === 'idle' ? startPomodoro : stopPomodoro}
+                  style={store.pomodoro.mode !== 'idle' ? { background: store.pomodoro.mode === 'work' ? 'rgba(224,82,82,0.16)' : 'rgba(82,200,122,0.16)', color: store.pomodoro.mode === 'work' ? '#e05252' : '#52c87a' } : undefined}>
+                  <Timer className="h-4 w-4" />
                 </Button>
               </TooltipTrigger><TooltipContent>Pomodoro</TooltipContent></Tooltip>
 
               <Tooltip><TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={() => store.setSleepTimerMinutes(store.sleepTimerMinutes ? 0 : 25)}>
-                  <Moon className="h-3.5 w-3.5" />
+                <Button variant="ghost" size="icon" className={(isMobile ? "h-9 w-9 flex-shrink-0" : "h-8 w-8") + " rounded-[10px] trans-smooth"} onClick={() => store.setSleepTimerMinutes(store.sleepTimerMinutes ? 0 : 25)}
+                  style={store.sleepTimerMinutes > 0 ? { background: 'rgba(245,166,35,0.16)', color: '#f5a623' } : undefined}>
+                  <Moon className="h-4 w-4" />
                 </Button>
               </TooltipTrigger><TooltipContent>Sleep Timer</TooltipContent></Tooltip>
             </TooltipProvider>
@@ -2620,36 +2668,79 @@ export default function VoxPDFv4() {
             onMouseUp={handleTextSelection}
             style={{ paddingTop: isMobile ? '12px' : '18px', paddingLeft: isMobile ? '14px' : '20px', paddingRight: isMobile ? '14px' : '20px', paddingBottom: store.parallelView ? '120px' : '100px', ...(store.focusModeType === 'narrowColumn' ? { maxWidth: '500px', margin: '0 auto' } : {}) }}>
 
-            {/* Drop zone */}
+            {/* Drop zone — hero launchpad */}
             {!store.paragraphs.length && !cbzImages.length && (
-              <div className="flex flex-col items-center justify-center min-h-full gap-5 py-20 anim-fade-up">
+              <div className="flex flex-col items-center justify-center min-h-full gap-6 py-16 anim-fade-up">
+                {/* Hero */}
                 <div className="relative">
-                  <div className="absolute inset-0 blur-2xl opacity-20 rounded-full" style={{ background: accentGradient }} />
-                  <div className="relative w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl" style={{ background: accentGradient }}>
-                    <Volume2 className="h-7 w-7" style={{ color: T.accentFg }} />
+                  <div className="absolute inset-0 blur-3xl opacity-30 rounded-full scale-110" style={{ background: accentGradient }} />
+                  <div className="relative w-20 h-20 rounded-[22px] flex items-center justify-center trans-smooth" style={{ background: accentGradient, boxShadow: `0 12px 36px ${T.accent}45, inset 0 1px 0 rgba(255,255,255,0.28)` }}>
+                    <Volume2 className="h-9 w-9" style={{ color: T.accentFg }} />
                   </div>
                 </div>
-                <div className="text-3xl font-bold tracking-tight gradient-text" style={{ fontFamily: 'Syne, sans-serif', backgroundImage: accentGradient }}>VoxPDF</div>
-                <div className="text-[12px] text-center max-w-[300px] leading-relaxed" style={{ color: T.textMuted }}>
-                  Lee PDF, EPUB, DOCX, CBZ en voz alta. OCR, resúmenes con GLM, speed reading RSVP, traducción, glosario, mapa mental y más.
+                <div className="text-center">
+                  <div className="text-[34px] font-bold tracking-tight gradient-text leading-none" style={{ fontFamily: 'Syne, sans-serif', backgroundImage: accentGradient }}>VoxPDF</div>
+                  <div className="text-[12px] mt-3 max-w-[320px] leading-relaxed mx-auto" style={{ color: T.textMuted }}>
+                    Lee PDF, EPUB, DOCX, CBZ en voz alta. OCR, resúmenes con GLM, speed reading, traducción y más.
+                  </div>
                 </div>
-                <div className={`border-2 border-dashed rounded-2xl p-8 cursor-pointer w-full max-w-[340px] text-center trans-smooth card-lift ${isDragging ? 'scale-[1.02]' : ''}`}
+
+                {/* Gradient-border dropzone */}
+                <div className={`w-full max-w-[380px] rounded-2xl p-[1.5px] trans-smooth card-lift ${isDragging ? 'scale-[1.02]' : ''}`}
                   style={{
-                    borderColor: isDragging ? accentColor : T.borderStrong,
-                    background: isDragging ? `${accentColor}12` : `${accentColor}06`,
-                    boxShadow: isDragging ? `0 0 0 4px ${accentColor}20, ${T.shadow}` : T.shadow,
-                  }}
-                  onClick={() => fileInputRef.current?.click()}>
-                  <div className="w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center trans-smooth" style={{ background: `${accentColor}18` }}>
-                    <Plus className="h-5 w-5" style={{ color: accentColor }} />
+                    background: isDragging ? accentGradient : `linear-gradient(135deg, ${T.borderStrong}, ${T.border})`,
+                    boxShadow: isDragging ? `0 0 0 4px ${accentColor}26, 0 16px 48px ${T.accent}35` : T.shadow,
+                  }}>
+                  <div className="rounded-[calc(1rem-1px)] px-8 py-9 text-center cursor-pointer trans-smooth"
+                    style={{ background: T.surface2 }}
+                    onClick={() => fileInputRef.current?.click()}>
+                    <div className="w-12 h-12 rounded-xl mx-auto mb-3.5 flex items-center justify-center trans-smooth" style={{ background: `${accentColor}16`, color: accentColor, border: `1px solid ${accentColor}30` }}>
+                      <Plus className="h-5 w-5" />
+                    </div>
+                    <p className="text-[13px] font-semibold">Arrastra tu archivo aquí</p>
+                    <p className="text-[11px] mt-1" style={{ color: T.textMuted }}>o haz clic para explorar</p>
+                    <div className="flex gap-1.5 flex-wrap justify-center mt-4">
+                      {['PDF', 'EPUB', 'DOCX', 'TXT', 'CBZ', 'CBR', 'IMG'].map(k => (
+                        <span key={k} className="px-2 py-0.5 rounded-md text-[9px] font-semibold tracking-wide trans-smooth" style={{ background: `${accentColor}10`, color: T.textMuted, border: `1px solid ${T.border}` }}>{k}</span>
+                      ))}
+                    </div>
                   </div>
-                  <p className="text-[12px] font-medium">Arrastra archivos aquí o toca para seleccionar</p>
-                  <small className="text-[10px] mt-1 block" style={{ color: T.textMuted }}>PDF · EPUB · DOCX · TXT · CBZ · CBR · Imágenes</small>
                 </div>
-                <div className="flex gap-1.5 flex-wrap justify-center text-[9px]">
-                  {['Space · Play', '← → · Párrafo', 'Ctrl+F · Buscar', 'B · Marcador', 'R · RSVP'].map(k => (
-                    <span key={k} className="px-2 py-1 rounded-md font-medium trans-smooth" style={{ background: `${accentColor}12`, color: T.textMuted, border: `1px solid ${T.border}` }}>{k}</span>
-                  ))}
+
+                {/* Quick actions */}
+                <div className={`grid gap-3 w-full max-w-[380px] ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  <button className="flex items-center gap-3 p-3.5 rounded-xl border text-left trans-smooth card-lift"
+                    style={{ background: T.surface2, borderColor: T.border }}
+                    onClick={() => { store.setSidebarTab('toolspanel'); setTimeout(() => document.getElementById('readurl-input')?.focus(), 150); }}>
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${accentColor}16`, color: accentColor }}>
+                      <Globe className="h-4 w-4" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[11.5px] font-medium leading-tight">Leer una URL</span>
+                      <span className="text-[9px] leading-tight mt-0.5" style={{ color: T.textMuted }}>Artículos y páginas web</span>
+                    </div>
+                  </button>
+                  <button className="flex items-center gap-3 p-3.5 rounded-xl border text-left trans-smooth card-lift"
+                    style={{ background: T.surface2, borderColor: T.border }}
+                    onClick={() => { store.setSidebarTab('toolspanel'); setTimeout(() => document.getElementById('paste-text-input')?.focus(), 150); }}>
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${accentColor}16`, color: accentColor }}>
+                      <ClipboardPaste className="h-4 w-4" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[11.5px] font-medium leading-tight">Pegar texto</span>
+                      <span className="text-[9px] leading-tight mt-0.5" style={{ color: T.textMuted }}>Notas, correos, apuntes</span>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Keyboard shortcuts — kbd style */}
+                <div className="flex items-center gap-2 flex-wrap justify-center">
+                  <span className="text-[9px] uppercase tracking-[0.14em]" style={{ color: T.textMuted }}>Atajos</span>
+                  <div className="flex gap-1 flex-wrap justify-center">
+                    {['Space', '← →', 'Ctrl+F', 'B', 'R'].map(k => (
+                      <kbd key={k} className="px-1.5 py-0.5 rounded-md font-mono font-semibold trans-smooth" style={{ background: `${accentColor}0d`, color: T.text, border: `1px solid ${T.border}`, borderBottom: `2px solid ${T.borderStrong}`, fontSize: '9px' }}>{k}</kbd>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
