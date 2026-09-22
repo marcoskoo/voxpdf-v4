@@ -267,3 +267,29 @@ Bug found & fixed during mobile deploy verification:
 Stage Summary:
 - Mobile responsive overhaul live on https://text2voice3.vercel.app. Key improvements: drawer sidebar, scrollable tab strip & header buttons, mobile-friendly player bar with big play button, stacked parallel/split views, fixed mind-map modal overflow.
 - Also fixed a critical regression in fetch-url (jina.ai bot-wall detection) that was returning Cloudflare stub content as article text. The mensajerosdivinos URL now works correctly again.
+
+---
+Task ID: 11
+Agent: Main Agent
+Task: Modern elegant redesign — "moderno, elegante, intuitivo, y adaptativo"
+
+Work Log:
+- Designed and implemented a centralized ThemeTokens system (bg, glow1/glow2, surface/surface2/surface3, text, textMuted, border, borderStrong, accent/accent2/accentFg, glass, shadow) for all 6 themes (dark, light, sepia, contrast, ocean, eink). Replaced ~8 scattered color ternaries + 17 hardcoded rgba borders with token lookups.
+- Ambient glow layer: fixed radial gradients (violet top-left, cyan bottom-right) behind the app for modern depth; disabled for eink/contrast.
+- Glass surfaces: sidebar, header, player bar and mind-map panel use translucent surfaces (rgba .82-.88) + backdrop-blur(20px) saturate(150%); eink/contrast opt out via glass:false token.
+- Logo: gradient squircle icon (accentGradient) with speaker glyph + gradient-text "VoxPDF" wordmark + subtitle "lee en voz alta · v4".
+- Player bar: floating gradient play button (h-10 desktop / h-12 mobile) with pulseGlow animation, scale hover/active micro-interactions, circular ghost transport buttons, pill-group speed selector on tinted track, gradient progress bar with rounded end.
+- Paragraph cards: rounded-2xl + card-lift hover (translateY -2px), active paragraph gets accent left border 3px + accent-tinted surface + ring glow; page/para label bumped to 9px font-medium.
+- Dropzone (first impression): gradient icon tile with blur halo, gradient-text "VoxPDF" heading 3xl, rounded-2xl dashed border with accent tint bg, keyboard shortcut chips as pills with accent tint + border, anim-fade-up entrance.
+- Theme bridge (critical fix): useEffect maps active theme tokens → shadcn CSS custom properties (--background, --primary, --border, etc.) on document.documentElement. This makes ALL shadcn components (outline buttons, dialogs, selects, tabs) adapt to the active theme. Previously outline buttons rendered white-on-white on dark themes.
+- button.tsx outline variant: bg-background → bg-transparent for perfect overlay on glass surfaces.
+- Modern CSS utilities in globals.css: gradient-text, modern-scroll (thin violet scrollbars), card-lift, anim-fade-up, play-glow/pulseGlow, shimmer, trans-smooth, ::selection accent tint, antialiased text rendering.
+- Mobile header fix: filename hidden on mobile while reading (player bar already shows it) so the 10-icon toolbar row has room.
+- Fixed React warning: padding shorthand + paddingBottom conflict → separate paddingTop/Left/Right/Bottom longhands.
+- QA via agent-browser screenshots (desktop 1440x900 + mobile 390x844) with VLM review agents: 3 iterations. v1 caught white-on-white outline buttons (fixed via theme bridge + transparent outline). v2 verified fix + gradient logo + dropzone PASS. v3 verified paragraph cards (accent border/tint on active), floating gradient play button, transport buttons all present (initially misread due to Next.js dev overlay pill), no horizontal overflow at 390px.
+- Build + push (18e89df) + production verified: site HTTP 200, fetch-url API still working (mensajerosdivinos: archivo, 22 paras, 823 words).
+
+Stage Summary:
+- Full modern redesign live on https://text2voice3.vercel.app across all 6 themes.
+- Design pillars delivered: modern (glass, gradients, glows, rounded corners, shadows), elegant (layered surfaces, refined spacing, subtle ambient light), intuitive (hover micro-interactions, clear active states, consistent accent system), adaptive (6 themes via tokens, responsive mobile/desktop, theme-aware shadcn components).
+- Architecture improvement: single source of truth for colors eliminates 25+ hardcoded values scattered through the 3100-line page component.
