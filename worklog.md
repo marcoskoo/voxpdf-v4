@@ -293,3 +293,26 @@ Stage Summary:
 - Full modern redesign live on https://text2voice3.vercel.app across all 6 themes.
 - Design pillars delivered: modern (glass, gradients, glows, rounded corners, shadows), elegant (layered surfaces, refined spacing, subtle ambient light), intuitive (hover micro-interactions, clear active states, consistent accent system), adaptive (6 themes via tokens, responsive mobile/desktop, theme-aware shadcn components).
 - Architecture improvement: single source of truth for colors eliminates 25+ hardcoded values scattered through the 3100-line page component.
+
+---
+Task ID: 12
+Agent: Main Agent
+Task: "mejorar vista" — premium polish pass sobre el rediseño (post-feedback de screenshot del usuario)
+
+Work Log:
+- Analizado screenshot del usuario con VLM + captura de producción actual: audit identificó header saturado (8 iconos planos sin agrupación), flatness (sin elevación), radios inconsistentes, ritmo vertical desigual en sidebar, dropzone dashed genérica, texto v4 duplicado.
+- Sidebar tabs: rediseñados como segmented pill control (contenedor rounded-xl con surface3 + borde hairline, triggers h-8 w-10 rounded-lg); estado activo = pill tintada con acento (data-[state=active]:!bg-[var(--accent)] + !text-[var(--accent-solid)] vía nuevas CSS vars --accent-solid/--accent-tint añadidas al theme bridge).
+- Sidebar Recents: botón primario "Abrir archivo" con FileUp icon; acciones secundarias ahora filas elegantes con icon tiles (Globe/ClipboardPaste) + título + subtítulo + chevron (reemplazan botones outline pesados); items recientes con icon tile acento; empty state con tile bordeado; micro-label "ARCHIVOS RECIENTES" con tracking 0.14em y mt-4.
+- TOC: hover tintado, capítulo activo con barra izquierda 2px accent + número alineado.
+- Header: boxShadow sutil de elevación; filename con FileText icon + fallback "Sin documento · arrastra un PDF para empezar" (color textMuted); búsqueda rediseñada como campo redondeado con tint bg + borde acento (reemplaza underline); iconos agrupados en 3 clusters (esenciales / modos de lectura / sesión) separados por hairline dividers h-4; toggles activos ahora muestran tinte (search=accent, parallel=accent, voice=verde, pomodoro=rojo/verde, sleep=ámbar); iconos h-3.5→h-4, botones rounded-[10px].
+- Empty state → hero launchpad: icono w-20 rounded-[22px] con glow blur-3xl + inner highlight; título 34px; dropzone con BORDE GRADIENTE (wrapper p-[1.5px] con linear-gradient borderStrong→border, drag→accentGradient + glow ring; reemplaza dashed) e inner surface2 con formatos como chips; 2 quick-action cards (Leer una URL / Pegar texto) glass con card-lift; atajos como <kbd> reales (border-b 2px, font-mono, label "ATAJOS").
+- UX móvil: drawer cerrado en primera carga (window.innerWidth < 768 → setSidebarOpen(false) en init effect) — antes abría tapando el contenido.
+- Contraste corregido per VLM audit: filename header opacity 0.70→textMuted; empty recents opacity 0.35→0.5 + borderStrong.
+- QA: 2 rondas VLM (desktop 1600px + móvil 390px). Ronda 1: 8.5/10 estilo Linear/Notion con 4 defectos menores (todos corregidos). Ronda 2 móvil: sin defectos, quick actions apilados 1 col, header icons caben.
+- Debug de entorno local: ChunkLoadError en pruebas móviles era por servidor next-server obsoleto ocupando puerto 3100 (EADDRINUSE al arrancar el nuevo) sirviendo chunks de un build anterior — código estaba bien; resuelto matando next-server y reiniciando limpio. Cuidado: pkill -f "next start" NO mata el proceso (se renombra a next-server); usar pkill -f next-server.
+- tsc 0 errores, next build exitoso, commit 31b24a1, push, deploy verificado en producción (dropzone/quick actions/kbd/pill tabs presentes vía curl + browser eval).
+
+Stage Summary:
+- Premium polish pass live en producción (31b24a1): header agrupado con estados activos, pill tabs segmentadas, dropzone con borde degradado, quick-action cards, atajos kbd, filas de acción con icon tiles, TOC con barra activa, drawer móvil cerrado al inicio.
+- Puntuación VLM: 8.5/10 comparado con Linear/Notion ("premium, ready-to-ship interface", sin defectos visibles tras correcciones).
+- Lección técnica: matar servidores next con `pkill -f next-server` (el proceso se renombra); verificar /tmp/next-start.log por EADDRINUSE antes de culpar al código.
