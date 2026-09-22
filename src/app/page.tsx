@@ -79,14 +79,130 @@ function detectLang(text: string): string {
   return 'en';
 }
 
-// ── Theme CSS maps ──
-const THEME_STYLES: Record<string, React.CSSProperties> = {
-  dark: { background: '#0a0a0c', color: '#e8e8f0' },
-  light: { background: '#f2f1f8', color: '#14141f' },
-  sepia: { background: '#f4ede0', color: '#3b2a14' },
-  contrast: { background: '#000', color: '#fff' },
-  ocean: { background: '#050d14', color: '#d0eaf8' },
-  eink: { background: '#f8f6f0', color: '#1a1a1a' },
+// ── Modern design token system ──
+// Single source of truth for every color in the UI shell.
+// Surfaces are layered (surface1 = chrome, surface2 = cards, surface3 = elevated).
+interface ThemeTokens {
+  bg: string;            // app background (base)
+  glow1: string;         // radial glow accent (top-left)
+  glow2: string;         // radial glow accent (bottom-right)
+  surface: string;       // header / sidebar / player (glass-capable)
+  surface2: string;      // paragraph cards
+  surface3: string;      // elevated: popovers, mini-map
+  text: string;
+  textMuted: string;     // secondary text
+  border: string;        // hairline borders
+  borderStrong: string;  // emphasis borders
+  accent: string;        // primary accent
+  accent2: string;       // gradient end
+  accentFg: string;      // text on accent
+  glass: boolean;        // enable backdrop blur effects
+  shadow: string;        // card shadow
+}
+
+const THEMES: Record<string, ThemeTokens> = {
+  dark: {
+    bg: '#07070c',
+    glow1: 'rgba(124, 106, 245, 0.09)',
+    glow2: 'rgba(64, 180, 220, 0.05)',
+    surface: 'rgba(17, 17, 26, 0.82)',
+    surface2: '#101018',
+    surface3: '#161622',
+    text: '#ececf4',
+    textMuted: 'rgba(236, 236, 244, 0.55)',
+    border: 'rgba(255, 255, 255, 0.08)',
+    borderStrong: 'rgba(255, 255, 255, 0.16)',
+    accent: '#8b7cf8',
+    accent2: '#6d5df0',
+    accentFg: '#ffffff',
+    glass: true,
+    shadow: '0 1px 2px rgba(0,0,0,0.4), 0 8px 32px rgba(0,0,0,0.35)',
+  },
+  light: {
+    bg: '#f6f6fa',
+    glow1: 'rgba(124, 106, 245, 0.10)',
+    glow2: 'rgba(64, 180, 220, 0.07)',
+    surface: 'rgba(255, 255, 255, 0.85)',
+    surface2: '#ffffff',
+    surface3: '#ffffff',
+    text: '#16161f',
+    textMuted: 'rgba(22, 22, 31, 0.55)',
+    border: 'rgba(20, 20, 40, 0.08)',
+    borderStrong: 'rgba(20, 20, 40, 0.18)',
+    accent: '#6d5df0',
+    accent2: '#5a4ae0',
+    accentFg: '#ffffff',
+    glass: true,
+    shadow: '0 1px 2px rgba(20,20,50,0.04), 0 8px 32px rgba(20,20,50,0.08)',
+  },
+  sepia: {
+    bg: '#f4ecdd',
+    glow1: 'rgba(139, 92, 42, 0.08)',
+    glow2: 'rgba(180, 120, 60, 0.05)',
+    surface: 'rgba(250, 244, 233, 0.88)',
+    surface2: '#faf4e9',
+    surface3: '#f7f0e2',
+    text: '#3b2a14',
+    textMuted: 'rgba(59, 42, 20, 0.55)',
+    border: 'rgba(59, 42, 20, 0.12)',
+    borderStrong: 'rgba(59, 42, 20, 0.25)',
+    accent: '#a0692c',
+    accent2: '#8b5c2a',
+    accentFg: '#ffffff',
+    glass: true,
+    shadow: '0 1px 2px rgba(59,42,20,0.05), 0 8px 32px rgba(59,42,20,0.10)',
+  },
+  contrast: {
+    bg: '#000000',
+    glow1: 'rgba(255, 224, 102, 0.06)',
+    glow2: 'transparent',
+    surface: '#000000',
+    surface2: '#0a0a0a',
+    surface3: '#141414',
+    text: '#ffffff',
+    textMuted: 'rgba(255, 255, 255, 0.70)',
+    border: 'rgba(255, 255, 255, 0.35)',
+    borderStrong: 'rgba(255, 255, 255, 0.7)',
+    accent: '#ffe066',
+    accent2: '#ffd21f',
+    accentFg: '#000000',
+    glass: false,
+    shadow: 'none',
+  },
+  ocean: {
+    bg: '#04101a',
+    glow1: 'rgba(64, 180, 220, 0.10)',
+    glow2: 'rgba(20, 120, 180, 0.06)',
+    surface: 'rgba(8, 26, 40, 0.85)',
+    surface2: '#081a28',
+    surface3: '#0d2436',
+    text: '#d0eaf8',
+    textMuted: 'rgba(208, 234, 248, 0.55)',
+    border: 'rgba(100, 200, 240, 0.14)',
+    borderStrong: 'rgba(100, 200, 240, 0.3)',
+    accent: '#40b4dc',
+    accent2: '#2a9ac4',
+    accentFg: '#04101a',
+    glass: true,
+    shadow: '0 1px 2px rgba(0,0,0,0.4), 0 8px 32px rgba(0,0,0,0.35)',
+  },
+  eink: {
+    bg: '#f8f6f0',
+    glow1: 'transparent',
+    glow2: 'transparent',
+    surface: '#f0ede6',
+    surface2: '#f8f6f0',
+    surface3: '#ecebe4',
+    text: '#1a1a1a',
+    textMuted: 'rgba(26, 26, 26, 0.55)',
+    border: 'rgba(26, 26, 26, 0.18)',
+    borderStrong: 'rgba(26, 26, 26, 0.4)',
+    accent: '#333333',
+    accent2: '#222222',
+    accentFg: '#ffffff',
+    glass: false,
+    shadow: 'none',
+  },
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -142,6 +258,33 @@ export default function VoxPDFv4() {
   const [searchOpen, setSearchOpen] = useState(false);
 
   // ── Initialize ──
+  // ── Theme bridge: map app theme tokens → shadcn CSS variables ──
+  // Makes ALL shadcn components (Button outline, Dialog, Select, Tabs…) adapt
+  // to the active VoxPDF theme automatically. Without this, outline variants
+  // render with light-mode colors (white bg) on dark themes.
+  useEffect(() => {
+    const t = THEMES[store.theme] || THEMES.dark;
+    const root = document.documentElement;
+    root.style.setProperty('--background', t.bg);
+    root.style.setProperty('--foreground', t.text);
+    root.style.setProperty('--card', t.surface2);
+    root.style.setProperty('--card-foreground', t.text);
+    root.style.setProperty('--popover', t.surface3);
+    root.style.setProperty('--popover-foreground', t.text);
+    root.style.setProperty('--primary', t.accent);
+    root.style.setProperty('--primary-foreground', t.accentFg);
+    root.style.setProperty('--secondary', t.surface3);
+    root.style.setProperty('--secondary-foreground', t.text);
+    root.style.setProperty('--muted', t.surface3);
+    root.style.setProperty('--muted-foreground', t.textMuted);
+    root.style.setProperty('--accent', `${t.accent}20`);
+    root.style.setProperty('--accent-foreground', t.text);
+    root.style.setProperty('--border', t.border);
+    root.style.setProperty('--input', t.border);
+    root.style.setProperty('--ring', t.accent);
+    root.style.setProperty('--destructive', '#e05252');
+  }, [store.theme]);
+
   useEffect(() => {
     loadSettings();
     loadVoices();
@@ -1318,12 +1461,21 @@ export default function VoxPDFv4() {
   }, [store.paragraphs, store.currentParaIdx, store.lazyRendering]);
 
   const fontStack = store.fontFamily === 'mono' ? "'DM Mono', monospace" : store.fontFamily === 'serif' ? 'Georgia, serif' : 'system-ui, sans-serif';
-  const themeStyle = THEME_STYLES[store.theme] || THEME_STYLES.dark;
-  const accentColor = store.theme === 'eink' ? '#333' : store.theme === 'ocean' ? '#40b4dc' : store.theme === 'sepia' ? '#8b5c2a' : store.theme === 'contrast' ? '#ffe066' : '#7c6af5';
+  // Modern token system: single source of truth for all shell colors
+  const T = THEMES[store.theme] || THEMES.dark;
+  const themeStyle = { background: T.bg, color: T.text };
+  const accentColor = T.accent;
+  const accentGradient = `linear-gradient(135deg, ${T.accent} 0%, ${T.accent2} 100%)`;
+  // Glass backdrop for chrome surfaces (header/sidebar/player)
+  const glassStyle = T.glass ? { backdropFilter: 'blur(20px) saturate(150%)', WebkitBackdropFilter: 'blur(20px) saturate(150%)' } : {};
   const effectiveSidebarOpen = store.focusModeType === 'distractionFree' ? false : store.sidebarOpen;
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: themeStyle.background, color: themeStyle.color, fontFamily: fontStack }}>
+    <div className="flex h-screen overflow-hidden relative" style={{ background: T.bg, color: T.text, fontFamily: fontStack }}>
+      {/* Ambient glow layer — modern depth without clutter */}
+      <div className="pointer-events-none fixed inset-0 z-0" aria-hidden style={{
+        background: `radial-gradient(600px 400px at 15% 0%, ${T.glow1}, transparent 70%), radial-gradient(800px 600px at 100% 100%, ${T.glow2}, transparent 70%)`,
+      }} />
       {/* ══ SIDEBAR ══ */}
       {/* Mobile backdrop */}
       {isMobile && effectiveSidebarOpen && (
@@ -1336,18 +1488,22 @@ export default function VoxPDFv4() {
         <aside
           className={
             isMobile
-              ? 'fixed inset-y-0 left-0 z-50 w-[85vw] max-w-[320px] border-r flex flex-col overflow-hidden shadow-2xl'
-              : 'w-[280px] min-w-[280px] border-r flex flex-col overflow-hidden'
+              ? 'fixed inset-y-0 left-0 z-50 w-[85vw] max-w-[320px] border-r flex flex-col overflow-hidden'
+              : 'w-[280px] min-w-[280px] border-r flex flex-col overflow-hidden relative z-10'
           }
-          style={{ background: store.theme === 'light' ? '#fff' : store.theme === 'eink' ? '#f0ede6' : '#111115', borderColor: 'rgba(255,255,255,0.07)' }}>
+          style={{ background: T.surface, borderColor: T.border, ...glassStyle, ...(isMobile ? { boxShadow: '0 24px 64px rgba(0,0,0,0.45)' } : {}) }}>
           {/* Logo */}
-          <div className="p-3 border-b flex items-center justify-between" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full" style={{ background: accentColor }} />
-              <span className="text-lg font-bold tracking-tight" style={{ fontFamily: 'Syne, sans-serif' }}>VoxPDF</span>
-              <span className="text-[9px] opacity-40">v4</span>
+          <div className="px-4 py-3.5 border-b flex items-center justify-between" style={{ borderColor: T.border }}>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg trans-smooth" style={{ background: accentGradient, boxShadow: `0 4px 12px ${T.accent}40` }}>
+                <Volume2 className="h-4 w-4" style={{ color: T.accentFg }} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[17px] font-bold tracking-tight leading-none gradient-text" style={{ fontFamily: 'Syne, sans-serif', backgroundImage: accentGradient }}>VoxPDF</span>
+                <span className="text-[9px] opacity-40 leading-none mt-0.5">lee en voz alta · v4</span>
+              </div>
             </div>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => store.setSidebarOpen(false)}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg trans-smooth hover:bg-black/5 dark:hover:bg-white/5" onClick={() => store.setSidebarOpen(false)}>
               <PanelLeftClose className="h-4 w-4" />
             </Button>
           </div>
@@ -1355,25 +1511,25 @@ export default function VoxPDFv4() {
           {/* Tabs */}
           <Tabs value={store.sidebarTab} onValueChange={store.setSidebarTab} className="flex-1 flex flex-col overflow-hidden">
             <TabsList
-              className="flex overflow-x-auto p-0 h-10 rounded-none border-b gap-0 flex-shrink-0 no-scrollbar"
-              style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+              className="flex overflow-x-auto p-0 h-11 rounded-none border-b gap-0 flex-shrink-0 no-scrollbar"
+              style={{ borderColor: T.border }}
             >
-              <TabsTrigger value="recents" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Recientes"><BookOpen className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="toc" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Índice"><Layers className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="bookmarks" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Marcadores"><BookmarkIcon className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="qa" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Q&A"><MessageCircle className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="quiz" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Quiz"><HelpCircle className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="citations" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Citas"><Quote className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="analysis" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Análisis"><BarChart3 className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="audio" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Audio"><Headphones className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="tools" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Herramientas"><Brain className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="toolspanel" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Tools"><ScanLine className="h-3.5 w-3.5" /></TabsTrigger>
-              <TabsTrigger value="settings" className="text-[10px] h-10 rounded-none px-2 flex-shrink-0 flex flex-col items-center gap-0.5" title="Ajustes"><Settings className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="recents" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Recientes"><BookOpen className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="toc" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Índice"><Layers className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="bookmarks" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Marcadores"><BookmarkIcon className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="qa" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Q&A"><MessageCircle className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="quiz" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Quiz"><HelpCircle className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="citations" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Citas"><Quote className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="analysis" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Análisis"><BarChart3 className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="audio" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Audio"><Headphones className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="tools" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Herramientas"><Brain className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="toolspanel" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Tools"><ScanLine className="h-3.5 w-3.5" /></TabsTrigger>
+              <TabsTrigger value="settings" className="text-[10px] h-11 rounded-none px-2.5 flex-shrink-0 flex flex-col items-center gap-0.5 data-[state=active]:shadow-inner trans-smooth" title="Ajustes"><Settings className="h-3.5 w-3.5" /></TabsTrigger>
             </TabsList>
 
             {/* Recents Tab */}
             <TabsContent value="recents" className="flex-1 overflow-y-auto p-2 m-0">
-              <Button className="w-full mb-2" style={{ background: accentColor }} onClick={() => fileInputRef.current?.click()}>
+              <Button className="w-full mb-2 h-10 rounded-xl font-semibold trans-smooth hover:scale-[1.01] active:scale-[0.99] hover:shadow-lg" style={{ background: accentGradient, color: T.accentFg, boxShadow: `0 4px 14px ${T.accent}35` }} onClick={() => fileInputRef.current?.click()}>
                 <Plus className="h-3 w-3 mr-1" /> Abrir archivo
               </Button>
               <Button variant="outline" className="w-full mb-2 text-[11px]" onClick={() => { store.setSidebarTab('toolspanel'); setTimeout(() => document.getElementById('readurl-input')?.focus(), 150); }}>
@@ -1411,7 +1567,7 @@ export default function VoxPDFv4() {
             <TabsContent value="bookmarks" className="flex-1 overflow-y-auto p-2 m-0">
               {store.bookmarks.map((bm, i) => (
                 <div key={i} className="p-2 rounded-lg border mb-1 cursor-pointer hover:opacity-80 text-[11px]"
-                  style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+                  style={{ borderColor: T.border }}
                   onClick={() => { jumpTo(bm.paraIdx); store.setSidebarOpen(false); }}>
                   <div className="font-semibold truncate">{bm.text.slice(0, 40)}…</div>
                   <div className="text-[9px] opacity-40">{bm.note || `Párrafo ${bm.paraIdx + 1}`}</div>
@@ -1423,7 +1579,7 @@ export default function VoxPDFv4() {
             {/* Tools Tab */}
             <TabsContent value="tools" className="flex-1 overflow-y-auto p-2 m-0 space-y-1">
               {/* Flashcards */}
-              <div className="p-2 rounded-lg border" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+              <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
                 <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Flashcards → Anki (GLM)</div>
                 <div className="flex gap-1">
                   <Button variant="outline" size="sm" className="text-[10px] h-6 flex-1" onClick={generateFlashcards}>
@@ -1437,7 +1593,7 @@ export default function VoxPDFv4() {
               </div>
 
               {/* Summarize */}
-              <div className="p-2 rounded-lg border" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+              <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
                 <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Resumir con GLM</div>
                 <div className="flex gap-1">
                   <Button variant="outline" size="sm" className="text-[10px] h-6 flex-1" onClick={() => summarizeDocument('brief')}>
@@ -1453,7 +1609,7 @@ export default function VoxPDFv4() {
               </div>
 
               {/* Translation (GLM) */}
-              <div className="p-2 rounded-lg border" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+              <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
                 <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Traducción al vuelo (GLM)</div>
                 <div className="flex items-center gap-1 mb-1">
                   <Globe className="h-3 w-3 opacity-40" />
@@ -1475,7 +1631,7 @@ export default function VoxPDFv4() {
               </div>
 
               {/* Mind Map */}
-              <div className="p-2 rounded-lg border" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+              <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
                 <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Mapa mental (GLM)</div>
                 <Button variant="outline" size="sm" className="text-[10px] h-6 w-full" onClick={() => setShowMindMap(!showMindMap)}>
                   <Brain className="h-3 w-3 mr-1" /> {showMindMap ? 'Ocultar' : 'Mostrar'} mapa
@@ -1483,7 +1639,7 @@ export default function VoxPDFv4() {
               </div>
 
               {/* Heat Map */}
-              <div className="p-2 rounded-lg border" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+              <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
                 <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Heat map de palabras</div>
                 <Button variant="outline" size="sm" className="text-[10px] h-6 w-full" onClick={() => setShowHeatMap(!showHeatMap)}>
                   <Flame className="h-3 w-3 mr-1" /> {showHeatMap ? 'Ocultar' : 'Mostrar'} heat map
@@ -1491,7 +1647,7 @@ export default function VoxPDFv4() {
               </div>
 
               {/* Export Markdown */}
-              <div className="p-2 rounded-lg border" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+              <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
                 <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Exportar</div>
                 <div className="flex gap-1">
                   <Button variant="outline" size="sm" className="text-[10px] h-6 flex-1" onClick={exportMarkdown}>
@@ -1504,7 +1660,7 @@ export default function VoxPDFv4() {
               </div>
 
               {/* Backup */}
-              <div className="p-2 rounded-lg border" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+              <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
                 <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Backup anotaciones</div>
                 <div className="flex gap-1">
                   <Button variant="outline" size="sm" className="text-[10px] h-6 flex-1" onClick={exportAnnotations}>
@@ -1517,7 +1673,7 @@ export default function VoxPDFv4() {
               </div>
 
               {/* Cloud Sync */}
-              <div className="p-2 rounded-lg border" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+              <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
                 <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Sync en la nube</div>
                 {!store.isLoggedIn ? (
                   <Button variant="outline" size="sm" className="text-[10px] h-6 w-full" onClick={handleGoogleLogin}>
@@ -1537,7 +1693,7 @@ export default function VoxPDFv4() {
               </div>
 
               {/* Reading Room */}
-              <div className="p-2 rounded-lg border" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+              <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
                 <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Sala de lectura grupal</div>
                 <Button variant="outline" size="sm" className="text-[10px] h-6 w-full" onClick={() => setShowRoomModal(true)}>
                   <Users className="h-3 w-3 mr-1" /> {store.roomId ? `Sala: ${store.roomId}` : 'Crear / Unirse'}
@@ -1554,7 +1710,7 @@ export default function VoxPDFv4() {
                   {(['dark', 'light', 'sepia', 'contrast', 'ocean', 'eink'] as const).map(t => (
                     <Button key={t} variant={store.theme === t ? 'default' : 'outline'}
                       size="sm" className="text-[9px] h-6"
-                      style={store.theme === t ? { background: accentColor } : {}}
+                      style={store.theme === t ? { background: accentGradient, color: T.accentFg } : {}}
                       onClick={() => store.setTheme(t)}>
                       {t === 'eink' ? 'E-ink' : t.charAt(0).toUpperCase() + t.slice(1)}
                     </Button>
@@ -2303,23 +2459,26 @@ export default function VoxPDFv4() {
       )}
 
       {/* ══ MAIN CONTENT ══ */}
-      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0 relative z-10">
         {/* Top Bar */}
         <header className={isMobile ? "h-14 border-b flex items-center gap-1 px-2 flex-shrink-0" : "h-12 border-b flex items-center gap-2 px-3 flex-shrink-0"}
-          style={{ background: store.theme === 'light' ? '#fff' : store.theme === 'eink' ? '#f0ede6' : '#111115', borderColor: 'rgba(255,255,255,0.07)' }}>
+          style={{ background: T.surface, borderColor: T.border, ...glassStyle }}>
           {!effectiveSidebarOpen && (
-            <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={() => store.setSidebarOpen(true)}>
+            <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={() => store.setSidebarOpen(true)}>
               <PanelLeftOpen className="h-4 w-4" />
             </Button>
           )}
-          <div className={isMobile ? "flex-1 text-[12px] font-semibold truncate opacity-60 min-w-0" : "flex-1 text-[11px] font-semibold truncate opacity-60"}>{store.fileName || 'VoxPDF v4'}</div>
+          {/* Filename — hidden on mobile (player bar already shows it; frees space for icon row) */}
+          {(!isMobile || !store.paragraphs.length) && (
+            <div className={isMobile ? "flex-1 text-[12px] font-semibold truncate opacity-60 min-w-0" : "flex-1 text-[11px] font-semibold truncate opacity-60"}>{store.fileName || 'VoxPDF v4'}</div>
+          )}
 
           {/* Search */}
           {searchOpen && (
             <div className="flex items-center gap-1 flex-1 max-w-xs">
               <Search className="h-3 w-3 opacity-40" />
               <input className="flex-1 bg-transparent border-b text-[11px] outline-none py-1"
-                style={{ borderColor: accentColor }}
+                style={{ borderColor: accentColor, boxShadow: `0 1px 0 0 ${accentColor}40` }}
                 placeholder="Buscar…"
                 value={store.searchQuery}
                 onChange={(e) => { store.setSearchQuery(e.target.value); performSearch(e.target.value); }}
@@ -2364,49 +2523,49 @@ export default function VoxPDFv4() {
           <div className={isMobile ? "flex items-center gap-1 overflow-x-auto no-scrollbar flex-shrink-0" : "contents"}>
             <TooltipProvider>
               <Tooltip><TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={() => setSearchOpen(!searchOpen)}>
+                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={() => setSearchOpen(!searchOpen)}>
                   <Search className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger><TooltipContent>Buscar (Ctrl+F)</TooltipContent></Tooltip>
 
               <Tooltip><TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={addBookmarkAtCurrent}>
+                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={addBookmarkAtCurrent}>
                   <BookmarkIcon className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger><TooltipContent>Marcador (B)</TooltipContent></Tooltip>
 
               <Tooltip><TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={() => setShowRSVP(true)}>
+                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={() => setShowRSVP(true)}>
                   <Zap className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger><TooltipContent>RSVP Speed Reading (R)</TooltipContent></Tooltip>
 
               <Tooltip><TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={store.voiceControlActive ? stopVoiceControl : startVoiceControl}>
+                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={store.voiceControlActive ? stopVoiceControl : startVoiceControl}>
                   {store.voiceControlActive ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
                 </Button>
               </TooltipTrigger><TooltipContent>Control por voz</TooltipContent></Tooltip>
 
               <Tooltip><TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={() => setShowTeleprompter(true)}>
+                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={() => setShowTeleprompter(true)}>
                   <Maximize className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger><TooltipContent>Teleprompter</TooltipContent></Tooltip>
 
               <Tooltip><TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={() => store.setParallelView(!store.parallelView)}>
+                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={() => store.setParallelView(!store.parallelView)}>
                   <Columns2 className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger><TooltipContent>Vista paralela</TooltipContent></Tooltip>
 
               <Tooltip><TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={store.pomodoro.mode === 'idle' ? startPomodoro : stopPomodoro}>
+                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={store.pomodoro.mode === 'idle' ? startPomodoro : stopPomodoro}>
                   <Timer className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger><TooltipContent>Pomodoro</TooltipContent></Tooltip>
 
               <Tooltip><TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={() => store.setSleepTimerMinutes(store.sleepTimerMinutes ? 0 : 25)}>
+                <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-lg flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-lg trans-smooth"} onClick={() => store.setSleepTimerMinutes(store.sleepTimerMinutes ? 0 : 25)}>
                   <Moon className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger><TooltipContent>Sleep Timer</TooltipContent></Tooltip>
@@ -2419,7 +2578,7 @@ export default function VoxPDFv4() {
           {/* ── Mini-map sidebar — hidden on mobile (too narrow to tap) ── */}
           {!isMobile && (
             <div className="w-[32px] border-r flex flex-col relative flex-shrink-0"
-              style={{ background: store.theme === 'light' ? '#f2f1f8' : '#0a0a0c', borderColor: 'rgba(255,255,255,0.07)' }}>
+              style={{ background: T.surface3, borderColor: T.border }}>
               <div className="relative flex-1" onClick={(e) => {
                 const pct = e.nativeEvent.offsetY / e.currentTarget.offsetHeight;
                 jumpTo(Math.floor(pct * store.paragraphs.length));
@@ -2440,7 +2599,7 @@ export default function VoxPDFv4() {
               {/* Current position */}
               <div className="absolute w-full h-[3px]" style={{
                 top: `${store.pageProgress * 100}%`,
-                background: accentColor,
+                background: accentGradient,
                 transition: 'top 0.3s'
               }} />
             </div>
@@ -2449,7 +2608,7 @@ export default function VoxPDFv4() {
           )}
 
           {/* ── Main reader ── */}
-          <div className={store.splitView ? 'flex-1 overflow-y-auto' : 'flex-1 overflow-y-auto'} ref={contentRef}
+          <div className={store.splitView ? 'flex-1 overflow-y-auto modern-scroll' : 'flex-1 overflow-y-auto modern-scroll'} ref={contentRef}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={(e) => {
@@ -2459,29 +2618,38 @@ export default function VoxPDFv4() {
               if (files.length) loadFileObj(files[0]);
             }}
             onMouseUp={handleTextSelection}
-            style={{ padding: isMobile ? '12px 14px' : '18px 20px', paddingBottom: store.parallelView ? '120px' : '100px', ...(store.focusModeType === 'narrowColumn' ? { maxWidth: '500px', margin: '0 auto' } : {}) }}>
+            style={{ paddingTop: isMobile ? '12px' : '18px', paddingLeft: isMobile ? '14px' : '20px', paddingRight: isMobile ? '14px' : '20px', paddingBottom: store.parallelView ? '120px' : '100px', ...(store.focusModeType === 'narrowColumn' ? { maxWidth: '500px', margin: '0 auto' } : {}) }}>
 
             {/* Drop zone */}
             {!store.paragraphs.length && !cbzImages.length && (
-              <div className="flex flex-col items-center justify-center min-h-full gap-4 py-20">
-                <BookOpen className="h-16 w-16 opacity-10" />
-                <div className="text-2xl font-bold tracking-tight opacity-30" style={{ fontFamily: 'Syne, sans-serif' }}>VoxPDF v4</div>
-                <div className="text-[12px] opacity-30 text-center max-w-[260px] leading-relaxed">
-                  Lee PDF, EPUB, DOCX, CBZ en voz alta. OCR, resúmenes con GLM, speed reading RSVP, traducción, glosario, mapa mental, Pomodoro y más.
+              <div className="flex flex-col items-center justify-center min-h-full gap-5 py-20 anim-fade-up">
+                <div className="relative">
+                  <div className="absolute inset-0 blur-2xl opacity-20 rounded-full" style={{ background: accentGradient }} />
+                  <div className="relative w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl" style={{ background: accentGradient }}>
+                    <Volume2 className="h-7 w-7" style={{ color: T.accentFg }} />
+                  </div>
                 </div>
-                <div className={`border-2 border-dashed rounded-xl p-8 cursor-pointer w-full max-w-[320px] text-center transition-colors ${isDragging ? 'border-opacity-100' : 'border-opacity-20'}`}
-                  style={{ borderColor: isDragging ? accentColor : 'rgba(255,255,255,0.13)', background: isDragging ? `${accentColor}10` : 'transparent' }}
+                <div className="text-3xl font-bold tracking-tight gradient-text" style={{ fontFamily: 'Syne, sans-serif', backgroundImage: accentGradient }}>VoxPDF</div>
+                <div className="text-[12px] text-center max-w-[300px] leading-relaxed" style={{ color: T.textMuted }}>
+                  Lee PDF, EPUB, DOCX, CBZ en voz alta. OCR, resúmenes con GLM, speed reading RSVP, traducción, glosario, mapa mental y más.
+                </div>
+                <div className={`border-2 border-dashed rounded-2xl p-8 cursor-pointer w-full max-w-[340px] text-center trans-smooth card-lift ${isDragging ? 'scale-[1.02]' : ''}`}
+                  style={{
+                    borderColor: isDragging ? accentColor : T.borderStrong,
+                    background: isDragging ? `${accentColor}12` : `${accentColor}06`,
+                    boxShadow: isDragging ? `0 0 0 4px ${accentColor}20, ${T.shadow}` : T.shadow,
+                  }}
                   onClick={() => fileInputRef.current?.click()}>
-                  <Plus className="h-6 w-6 mx-auto mb-2 opacity-30" />
-                  <p className="text-[11px] opacity-40">Arrastra archivos aquí o toca para seleccionar</p>
-                  <small className="text-[9px] opacity-25">PDF · EPUB · DOCX · TXT · CBZ · CBR · Imágenes</small>
+                  <div className="w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center trans-smooth" style={{ background: `${accentColor}18` }}>
+                    <Plus className="h-5 w-5" style={{ color: accentColor }} />
+                  </div>
+                  <p className="text-[12px] font-medium">Arrastra archivos aquí o toca para seleccionar</p>
+                  <small className="text-[10px] mt-1 block" style={{ color: T.textMuted }}>PDF · EPUB · DOCX · TXT · CBZ · CBR · Imágenes</small>
                 </div>
-                <div className="flex gap-2 flex-wrap justify-center text-[9px] opacity-20">
-                  <span className="px-2 py-0.5 rounded bg-white/5">Space Play</span>
-                  <span className="px-2 py-0.5 rounded bg-white/5">← → Párrafo</span>
-                  <span className="px-2 py-0.5 rounded bg-white/5">Ctrl+F Buscar</span>
-                  <span className="px-2 py-0.5 rounded bg-white/5">B Marcador</span>
-                  <span className="px-2 py-0.5 rounded bg-white/5">R RSVP</span>
+                <div className="flex gap-1.5 flex-wrap justify-center text-[9px]">
+                  {['Space · Play', '← → · Párrafo', 'Ctrl+F · Buscar', 'B · Marcador', 'R · RSVP'].map(k => (
+                    <span key={k} className="px-2 py-1 rounded-md font-medium trans-smooth" style={{ background: `${accentColor}12`, color: T.textMuted, border: `1px solid ${T.border}` }}>{k}</span>
+                  ))}
                 </div>
               </div>
             )}
@@ -2490,7 +2658,7 @@ export default function VoxPDFv4() {
             {cbzImages.length > 0 && (
               <div className="max-w-[700px] mx-auto space-y-2">
                 {cbzImages.map((src, i) => (
-                  <div key={i} className="rounded-lg overflow-hidden border" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+                  <div key={i} className="rounded-lg overflow-hidden border" style={{ borderColor: T.border }}>
                     <div className="text-[8px] opacity-30 text-right px-2 py-1">Página {i + 1}/{cbzImages.length}</div>
                     <img src={src} alt={`Página ${i + 1}`} className="w-full" loading="lazy" />
                   </div>
@@ -2539,7 +2707,7 @@ export default function VoxPDFv4() {
                 <div className="space-y-2">
                   {renderedParas.map((p) => (
                     <div key={p.origIdx} className="p-2 rounded-lg border text-[12px] opacity-60"
-                      style={{ borderColor: 'rgba(255,255,255,0.07)', minHeight: '40px' }}>
+                      style={{ borderColor: T.border, minHeight: '40px' }}>
                       <Textarea
                         className="bg-transparent border-0 text-[11px] resize-none min-h-[30px] p-0"
                         style={{ color: themeStyle.color }}
@@ -2560,31 +2728,32 @@ export default function VoxPDFv4() {
                   {renderedParas
                     .filter((_, i) => store.focusModeType !== 'lineByLine' || i === store.focusLineIdx)
                     .map((p) => (
-                  <div key={p.origIdx} className={`rounded-xl ${isMobile ? 'p-3' : 'p-6'} ${store.einkOptimized ? 'shadow-none border' : 'border'}`}
+                  <div key={p.origIdx} className={`rounded-2xl card-lift ${isMobile ? 'p-3' : 'p-6'} border`}
                     style={{
-                      background: store.theme === 'light' ? '#fff' : store.theme === 'eink' ? '#f8f6f0' : '#111115',
-                      borderColor: 'rgba(255,255,255,0.07)',
+                      background: T.surface2,
+                      borderColor: p.origIdx === store.currentParaIdx ? `${T.accent}55` : T.border,
+                      boxShadow: p.origIdx === store.currentParaIdx ? `0 0 0 1px ${T.accent}30, ${T.shadow}` : T.shadow,
                       opacity: store.lazyRendering && Math.abs(p.origIdx - store.currentParaIdx) > 100 ? 0.3 : 1,
                     }}
                     data-page={p.page}>
-                    <div className="text-[8px] opacity-25 text-right mb-2">Página {p.page} · Párrafo {p.origIdx + 1}</div>
+                    <div className="text-[9px] opacity-30 text-right mb-2 font-medium">Página {p.page} · Párrafo {p.origIdx + 1}</div>
                     <ContextMenu>
                       <ContextMenuTrigger asChild>
                         <div data-para-idx={p.origIdx}
-                          className={`cursor-pointer transition-all leading-[1.95] select-text`}
+                          className={`cursor-pointer transition-all leading-[1.95] select-text rounded-lg`}
                           style={{
                             fontSize: `${store.fontSize}px`,
                             fontFamily: fontStack,
-                            background: p.origIdx === store.currentParaIdx ? `${accentColor}12` : getHeatColor(p.text),
-                            borderLeft: p.origIdx === store.currentParaIdx ? `2px solid ${accentColor}` : '2px solid transparent',
+                            background: p.origIdx === store.currentParaIdx ? `${accentColor}14` : getHeatColor(p.text),
+                            borderLeft: p.origIdx === store.currentParaIdx ? `3px solid ${accentColor}` : '3px solid transparent',
                             opacity: store.focusMode && p.origIdx !== store.currentParaIdx ? 0.12 : undefined,
-                            paddingLeft: p.origIdx === store.currentParaIdx ? '9px' : '6px',
-                            padding: '3px 6px',
-                            borderRadius: '5px',
+                            paddingLeft: p.origIdx === store.currentParaIdx ? '10px' : '6px',
+                            padding: '4px 8px',
+                            borderRadius: '8px',
                           }}
                           onClick={() => jumpTo(p.origIdx)}>
                           {(p.isHeader || p.isFooter) && (
-                            <span className="text-[8px] px-1 py-0.5 rounded border mr-1" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+                            <span className="text-[8px] px-1.5 py-0.5 rounded-md border mr-1 font-medium" style={{ borderColor: T.borderStrong }}>
                               {p.isHeader ? 'encab.' : 'pie'}
                             </span>
                           )}
@@ -2637,7 +2806,7 @@ export default function VoxPDFv4() {
                 </div>
                 {/* Split View second document */}
                 {store.splitView && store.splitDocParagraphs.length > 0 && (
-                  <div className={(isMobile ? 'w-full border-t pt-3 mt-3' : 'w-1/2 border-l pl-4') + ' overflow-y-auto space-y-2'} style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+                  <div className={(isMobile ? 'w-full border-t pt-3 mt-3' : 'w-1/2 border-l pl-4') + ' overflow-y-auto space-y-2'} style={{ borderColor: T.border }}>
                     <p className="text-xs font-semibold mb-2">{store.splitDocName}</p>
                     {store.splitDocParagraphs.map((p, i) => (
                       <p key={i} className="text-sm mb-2 leading-relaxed">{p.text}</p>
@@ -2651,7 +2820,7 @@ export default function VoxPDFv4() {
           {/* ── Mind Map Panel — hidden inline on mobile, use the modal trigger instead ── */}
           {showMindMap && store.mindMap && !isMobile && (
             <div className="w-[280px] border-l overflow-y-auto flex-shrink-0 p-3"
-              style={{ background: store.theme === 'light' ? '#fff' : '#111115', borderColor: 'rgba(255,255,255,0.07)' }}>
+              style={{ background: T.surface, borderColor: T.border, ...glassStyle }}>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[11px] font-semibold">Mapa Mental</span>
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowMindMap(false)}>
@@ -2671,63 +2840,65 @@ export default function VoxPDFv4() {
         {/* ══ PLAYER BAR ══ */}
         {store.paragraphs.length > 0 && (
           <div ref={playerRef} className="border-t flex-shrink-0"
-            style={{ background: store.theme === 'light' ? '#fff' : store.theme === 'eink' ? '#f0ede6' : '#111115', borderColor: 'rgba(255,255,255,0.07)' }}>
-            {/* Progress bar — taller on mobile for touch */}
-            <div className={isMobile ? "h-2 cursor-pointer" : "h-1 cursor-pointer"} style={{ background: 'rgba(255,255,255,0.05)' }}
+            style={{ background: T.surface, borderColor: T.border, ...glassStyle }}>
+            {/* Progress bar — taller on mobile for touch, gradient fill */}
+            <div className={isMobile ? "h-2 cursor-pointer group" : "h-1.5 cursor-pointer group"} style={{ background: 'rgba(128,128,160,0.15)' }}
               onClick={(e) => {
                 const pct = e.nativeEvent.offsetX / e.currentTarget.offsetWidth;
                 jumpTo(Math.floor(pct * store.paragraphs.length));
               }}>
-              <div className="h-full transition-all" style={{ width: `${store.pageProgress * 100}%`, background: accentColor }} />
+              <div className="h-full transition-all duration-300 rounded-r-full" style={{ width: `${store.pageProgress * 100}%`, background: accentGradient }} />
             </div>
-            <div className={isMobile ? "flex items-center gap-1 px-2 py-2" : "flex items-center gap-2 px-3 py-2"}>
-              <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={prevPara}>
+            <div className={isMobile ? "flex items-center gap-1 px-2 py-2.5" : "flex items-center gap-1.5 px-3 py-2.5"}>
+              <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-full flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-full trans-smooth"} onClick={prevPara}>
                 <SkipBack className="h-3.5 w-3.5" />
               </Button>
               {/* Skip -10s — hide on mobile to save space */}
               {!isMobile && (
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {/* skip -10s */}}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full trans-smooth" onClick={() => {/* skip -10s */}}>
                   <RotateCcw className="h-3.5 w-3.5" />
                 </Button>
               )}
-              <Button className={isMobile ? "h-12 w-12 rounded-full flex-shrink-0" : "h-9 w-9 rounded-full"} style={{ background: accentColor }} onClick={togglePlay}>
-                {store.playing ? <Pause className={isMobile ? "h-5 w-5 text-white" : "h-4 w-4 text-white"} /> : <Play className={isMobile ? "h-5 w-5 text-white" : "h-4 w-4 text-white"} />}
+              {/* Floating play button — gradient + glow */}
+              <Button className={isMobile ? "h-12 w-12 rounded-full flex-shrink-0 play-glow trans-smooth hover:scale-105 active:scale-95" : "h-10 w-10 rounded-full flex-shrink-0 trans-smooth hover:scale-105 active:scale-95"}
+                style={{ background: accentGradient, color: T.accentFg, boxShadow: `0 4px 16px ${T.accent}45` }} onClick={togglePlay}>
+                {store.playing ? <Pause className={isMobile ? "h-5 w-5" : "h-4 w-4"} /> : <Play className={isMobile ? "h-5 w-5 ml-0.5" : "h-4 w-4 ml-0.5"} />}
               </Button>
               {/* Skip +10s — hide on mobile */}
               {!isMobile && (
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {/* skip +10s */}}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full trans-smooth" onClick={() => {/* skip +10s */}}>
                   <RefreshCw className="h-3.5 w-3.5" />
                 </Button>
               )}
-              <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={nextPara}>
+              <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-full flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-full trans-smooth"} onClick={nextPara}>
                 <SkipForward className="h-3.5 w-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 flex-shrink-0" : "h-7 w-7"} onClick={() => stopReading()}>
+              <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-full flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-full trans-smooth"} onClick={() => stopReading()}>
                 <Square className="h-3 w-3" />
               </Button>
 
               <div className="flex-1 text-center min-w-0">
-                <div className={isMobile ? "text-[11px] font-semibold truncate" : "text-[11px] font-semibold truncate"}>{store.fileName}</div>
+                <div className="text-[11px] font-semibold truncate">{store.fileName}</div>
                 <div className="text-[9px] opacity-40">
                   Párrafo {store.currentParaIdx + 1}/{store.paragraphs.length} · p.{store.paragraphs[store.currentParaIdx]?.page || '-'}
                 </div>
               </div>
 
-              {/* Speed buttons — hide on mobile, use the Audio tab in sidebar instead */}
+              {/* Speed buttons — modern pill group, hide on mobile */}
               {!isMobile && (
-                <div className="flex gap-0.5">
+                <div className="flex gap-1 p-0.5 rounded-full" style={{ background: 'rgba(128,128,160,0.12)' }}>
                   {[1, 1.5, 2].map(s => (
-                    <Button key={s} variant={store.rate === s ? 'default' : 'outline'}
-                      size="sm" className="text-[9px] h-6 px-2"
-                      style={store.rate === s ? { background: accentColor } : {}}
+                    <button key={s}
+                      className={`text-[10px] font-semibold px-2.5 h-6 rounded-full trans-smooth ${store.rate === s ? 'shadow-sm' : 'opacity-55 hover:opacity-90'}`}
+                      style={store.rate === s ? { background: accentGradient, color: T.accentFg } : {}}
                       onClick={() => store.setRate(s)}>
                       {s}×
-                    </Button>
+                    </button>
                   ))}
                 </div>
               )}
               {!isMobile && (
-                <span className="text-[9px] opacity-30 min-w-[40px] text-right">
+                <span className="text-[9px] opacity-40 min-w-[40px] text-right font-medium tabular-nums">
                   {formatTime(Math.round((store.paragraphs.length - store.currentParaIdx) * 12 / (store.rate * 3)))}
                 </span>
               )}
@@ -2750,7 +2921,7 @@ export default function VoxPDFv4() {
           <Textarea value={bookmarkNote} onChange={(e) => setBookmarkNote(e.target.value)} placeholder="Nota opcional…" rows={3} />
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setShowBookmarkModal(false)}>Cancelar</Button>
-            <Button className="flex-1" style={{ background: accentColor }} onClick={saveBookmark}>Guardar</Button>
+            <Button className="flex-1 trans-smooth hover:shadow-lg" style={{ background: accentGradient, color: T.accentFg }} onClick={saveBookmark}>Guardar</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -2835,10 +3006,10 @@ export default function VoxPDFv4() {
                   <span className="text-[9px] opacity-30">p.{store.paragraphs[u.currentParaIdx]?.page || '-'}</span>
                 </div>
               ))}
-              <div className="border-t pt-2" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+              <div className="border-t pt-2" style={{ borderColor: T.border }}>
                 <div className="flex gap-1">
                   <input className="flex-1 bg-transparent border rounded px-2 py-1 text-[11px]"
-                    style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+                    style={{ borderColor: T.border }}
                     placeholder="Mensaje…"
                     value={roomChatInput}
                     onChange={(e) => setRoomChatInput(e.target.value)}
@@ -2881,12 +3052,12 @@ export default function VoxPDFv4() {
             </div>
           ) : (
             <div className="space-y-3">
-              <Button className="w-full" style={{ background: accentColor }} onClick={createRoom}>
+              <Button className="w-full trans-smooth hover:shadow-lg" style={{ background: accentGradient, color: T.accentFg }} onClick={createRoom}>
                 <Users className="h-4 w-4 mr-2" />Crear nueva sala
               </Button>
               <div className="flex gap-2">
                 <input className="flex-1 bg-transparent border rounded px-2 py-1 text-[11px]"
-                  style={{ borderColor: 'rgba(255,255,255,0.07)' }}
+                  style={{ borderColor: T.border }}
                   placeholder="Código de sala…"
                   value={roomInput}
                   onChange={(e) => setRoomInput(e.target.value)} />
@@ -2900,7 +3071,7 @@ export default function VoxPDFv4() {
       {/* Glossary Popup */}
       {showGlossaryPopup && (
         <div className="fixed z-50 p-3 rounded-lg border shadow-xl max-w-[280px]"
-          style={{ left: glossaryPopupPos.x, top: glossaryPopupPos.y, background: store.theme === 'light' ? '#fff' : '#1f1f28', borderColor: 'rgba(255,255,255,0.13)' }}>
+          style={{ left: glossaryPopupPos.x, top: glossaryPopupPos.y, background: T.surface3, borderColor: T.borderStrong, boxShadow: T.shadow }}>
           <div className="font-semibold text-[12px] mb-1" style={{ color: accentColor }}>{glossaryPopupTerm}</div>
           <div className="text-[11px] opacity-60 mb-2">{glossaryPopupDef}</div>
           <div className="flex gap-1">
