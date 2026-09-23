@@ -342,3 +342,22 @@ Stage Summary:
 - Rediseño "impecable" live en https://text2voice3.vercel.app (VLM final: SHIP 9.2/10): estética de estudio de lectura premium, un solo acento terracota, cero gradientes AI-purple, fuentes de marca reales, jerarquía de acción única, radios unificados, contraste AA, reduced-motion, sin emojis ni botones muertos.
 - 3 rondas de auditoría VLM (6.5 → 8.2 → 8.5 → 9.2) usando los skills de gusto como criterio.
 - ALERTA INFRA: auto-deploy Git→Vercel roto. Usar `bash scripts/deploy-vercel.sh` tras cada push, o reinstalar la Vercel GitHub App con acceso a todos los repos (GitHub → Settings → Applications → Vercel) para restaurar el auto-deploy.
+
+---
+Task ID: 14
+Agent: main
+Task: Fix "Modo oscuro no funciona" — el modo oscuro se reportaba como roto en producción
+
+Work Log:
+- Investigación con agent-browser en https://text2voice3.vercel.app/ y verificación de CSS variables aplicadas vía eval (getComputedStyle)
+- VLM check de screenshots antes del fix: el shell estaba dark pero los componentes shadcn (Tabs, Select, Switch, Input) no aplicaban dark: variants
+- Diagnóstico de causa raíz: (1) FOUC — page pintaba white (light) antes de que React hidratara y el theme bridge effect corriera, flash visible en conexiones lentas; (2) shadcn dark: variants nunca activaban porque VoxPDF solo seteaba CSS vars inline en <html>, NUNCA añadía .dark class. Tailwind @custom-variant dark (&:is(.dark *)) requiere .dark en ancestor.
+- Fix en layout.tsx: inline script SYNCHRONOUS en <head> que lee localStorage.vox4_settings.theme (default 'dark'), añade .dark class + data-theme + colorScheme a <html> ANTES de que React hidrate — elimina FOUC y activa dark: variants desde el primer paint
+- Fix en page.tsx theme bridge effect: ahora también toggles .dark class + colorScheme al cambiar de tema (DARK_THEMES = ['dark','ocean','contrast'])
+- Validación: tsc OK, next build OK, push OK
+- Verificación en producción: html.dark presente desde el primer paint, no FOUC. Switches con thumb naranja sobre track dark (active), white sobre darker (inactive). Selects legibles. Tabs Dark/Light/Sepia/etc. con active destacado. Light/Dark/Ocean/Sepia todos cambian correctamente y .dark class se añade/remueve según corresponda.
+
+Stage Summary:
+- BUG RESUELTO: "Modo oscuro no funciona" → ahora dark mode aplicable desde primer paint, sin FOUC, y todos los componentes shadcn respetan dark: variants
+- Artefactos: dark-mode-*.png en download/
+- Commit: 5106f22 "fix(dark-mode): pre-hydration bootstrap + .dark class sync"
