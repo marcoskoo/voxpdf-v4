@@ -12,7 +12,7 @@ import {
   Sparkles, Download, Copy,
   PanelLeftClose, PanelLeftOpen, FileText,
   Moon,
-  ScanLine, MessageCircle, GitCompare, HelpCircle, Quote, ListChecks, Table2, BarChart3, TrendingUp, Smile, Frown, Meh, Share2, Languages as LangIcon, Calendar, SplitSquareVertical, Headphones, Radio, Volume2, Subtitles, Globe as GlobeIcon, CloudDownload, Target, ChevronRight, ChevronLeft, ClipboardPaste
+  ScanLine, MessageCircle, GitCompare, HelpCircle, Quote, ListChecks, Table2, BarChart3, TrendingUp, Smile, Frown, Meh, Share2, Languages as LangIcon, Calendar, SplitSquareVertical, Headphones, Radio, Volume2, Subtitles, Globe as GlobeIcon, CloudDownload, Target, ChevronRight, ChevronLeft, ClipboardPaste, Image as ImageIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -93,6 +93,7 @@ interface ThemeTokens {
   textMuted: string;     // secondary text
   border: string;        // hairline borders
   borderStrong: string;  // emphasis borders
+  borderHero: string;    // primary-action boundary (dropzone) — WCAG 1.4.11 ≥3:1
   accent: string;        // primary accent
   accent2: string;       // gradient end
   accentFg: string;      // text on accent
@@ -101,51 +102,57 @@ interface ThemeTokens {
 }
 
 const THEMES: Record<string, ThemeTokens> = {
+  // Design language: calm premium reading studio.
+  // ONE accent per theme (terracota on dark/light), WCAG AA-checked pairs,
+  // no gradients, tinted shadows, ultra-subtle ambient depth.
   dark: {
-    bg: '#07070c',
-    glow1: 'rgba(124, 106, 245, 0.09)',
-    glow2: 'rgba(64, 180, 220, 0.05)',
-    surface: 'rgba(17, 17, 26, 0.82)',
-    surface2: '#101018',
-    surface3: '#161622',
-    text: '#ececf4',
-    textMuted: 'rgba(236, 236, 244, 0.55)',
-    border: 'rgba(255, 255, 255, 0.08)',
-    borderStrong: 'rgba(255, 255, 255, 0.16)',
-    accent: '#8b7cf8',
-    accent2: '#6d5df0',
-    accentFg: '#ffffff',
+    bg: '#0a0a10',
+    glow1: 'rgba(226, 104, 61, 0.05)',
+    glow2: 'rgba(96, 130, 255, 0.03)',
+    surface: 'rgba(18, 18, 27, 0.86)',
+    surface2: '#111118',
+    surface3: '#171722',
+    text: '#ececf3',
+    textMuted: 'rgba(236, 236, 243, 0.70)',
+    border: 'rgba(255, 255, 255, 0.09)',
+    borderStrong: 'rgba(255, 255, 255, 0.22)',
+    borderHero: 'rgba(255, 255, 255, 0.30)',
+    accent: '#e2683d',
+    accent2: '#c25327',
+    accentFg: '#1c0d06',
     glass: true,
     shadow: '0 1px 2px rgba(0,0,0,0.4), 0 8px 32px rgba(0,0,0,0.35)',
   },
   light: {
     bg: '#f6f6fa',
-    glow1: 'rgba(124, 106, 245, 0.10)',
-    glow2: 'rgba(64, 180, 220, 0.07)',
+    glow1: 'rgba(189, 74, 34, 0.04)',
+    glow2: 'rgba(100, 160, 255, 0.04)',
     surface: 'rgba(255, 255, 255, 0.85)',
     surface2: '#ffffff',
     surface3: '#ffffff',
     text: '#16161f',
-    textMuted: 'rgba(22, 22, 31, 0.55)',
+    textMuted: 'rgba(22, 22, 31, 0.68)',
     border: 'rgba(20, 20, 40, 0.08)',
-    borderStrong: 'rgba(20, 20, 40, 0.18)',
-    accent: '#6d5df0',
-    accent2: '#5a4ae0',
+    borderStrong: 'rgba(20, 20, 40, 0.22)',
+    borderHero: 'rgba(20, 20, 40, 0.30)',
+    accent: '#bd4a22',
+    accent2: '#a03d1a',
     accentFg: '#ffffff',
     glass: true,
     shadow: '0 1px 2px rgba(20,20,50,0.04), 0 8px 32px rgba(20,20,50,0.08)',
   },
   sepia: {
     bg: '#f4ecdd',
-    glow1: 'rgba(139, 92, 42, 0.08)',
-    glow2: 'rgba(180, 120, 60, 0.05)',
+    glow1: 'rgba(139, 92, 42, 0.06)',
+    glow2: 'rgba(180, 120, 60, 0.03)',
     surface: 'rgba(250, 244, 233, 0.88)',
     surface2: '#faf4e9',
     surface3: '#f7f0e2',
     text: '#3b2a14',
-    textMuted: 'rgba(59, 42, 20, 0.55)',
+    textMuted: 'rgba(59, 42, 20, 0.68)',
     border: 'rgba(59, 42, 20, 0.12)',
     borderStrong: 'rgba(59, 42, 20, 0.25)',
+    borderHero: 'rgba(59, 42, 20, 0.38)',
     accent: '#a0692c',
     accent2: '#8b5c2a',
     accentFg: '#ffffff',
@@ -160,9 +167,10 @@ const THEMES: Record<string, ThemeTokens> = {
     surface2: '#0a0a0a',
     surface3: '#141414',
     text: '#ffffff',
-    textMuted: 'rgba(255, 255, 255, 0.70)',
+    textMuted: 'rgba(255, 255, 255, 0.72)',
     border: 'rgba(255, 255, 255, 0.35)',
     borderStrong: 'rgba(255, 255, 255, 0.7)',
+    borderHero: 'rgba(255, 255, 255, 0.7)',
     accent: '#ffe066',
     accent2: '#ffd21f',
     accentFg: '#000000',
@@ -171,15 +179,16 @@ const THEMES: Record<string, ThemeTokens> = {
   },
   ocean: {
     bg: '#04101a',
-    glow1: 'rgba(64, 180, 220, 0.10)',
-    glow2: 'rgba(20, 120, 180, 0.06)',
+    glow1: 'rgba(64, 180, 220, 0.08)',
+    glow2: 'rgba(20, 120, 180, 0.04)',
     surface: 'rgba(8, 26, 40, 0.85)',
     surface2: '#081a28',
     surface3: '#0d2436',
     text: '#d0eaf8',
-    textMuted: 'rgba(208, 234, 248, 0.55)',
+    textMuted: 'rgba(208, 234, 248, 0.68)',
     border: 'rgba(100, 200, 240, 0.14)',
     borderStrong: 'rgba(100, 200, 240, 0.3)',
+    borderHero: 'rgba(100, 200, 240, 0.45)',
     accent: '#40b4dc',
     accent2: '#2a9ac4',
     accentFg: '#04101a',
@@ -194,9 +203,10 @@ const THEMES: Record<string, ThemeTokens> = {
     surface2: '#f8f6f0',
     surface3: '#ecebe4',
     text: '#1a1a1a',
-    textMuted: 'rgba(26, 26, 26, 0.55)',
+    textMuted: 'rgba(26, 26, 26, 0.68)',
     border: 'rgba(26, 26, 26, 0.18)',
     borderStrong: 'rgba(26, 26, 26, 0.4)',
+    borderHero: 'rgba(26, 26, 26, 0.5)',
     accent: '#333333',
     accent2: '#222222',
     accentFg: '#ffffff',
@@ -628,7 +638,7 @@ export default function VoxPDFv4() {
 
   async function loadImageOCR(file: File) {
     // Simplified: would use Tesseract.js
-    const paras = [{ text: `[Imagen: ${file.name} — OCR pendiente]`, page: 1, isHeader: false, isFooter: false }];
+    const paras = [{ text: `[Imagen: ${file.name}. OCR pendiente]`, page: 1, isHeader: false, isFooter: false }];
     store.setParagraphs(paras);
     toast({ title: file.name, description: 'Imagen cargada' });
   }
@@ -1464,12 +1474,17 @@ export default function VoxPDFv4() {
     return store.paragraphs.map((p, i) => ({ ...p, origIdx: i }));
   }, [store.paragraphs, store.currentParaIdx, store.lazyRendering]);
 
-  const fontStack = store.fontFamily === 'mono' ? "'DM Mono', monospace" : store.fontFamily === 'serif' ? 'Georgia, serif' : 'system-ui, sans-serif';
+  // Reading typography: real font stacks from next/font (loaded in layout.tsx)
+  const fontStack = store.fontFamily === 'mono'
+    ? 'var(--font-geist-mono), ui-monospace, monospace'
+    : store.fontFamily === 'serif'
+      ? 'var(--font-source-serif), Georgia, serif'
+      : 'var(--font-geist-sans), system-ui, sans-serif';
+  const wordmarkFont = 'var(--font-syne), var(--font-geist-sans), sans-serif';
   // Modern token system: single source of truth for all shell colors
   const T = THEMES[store.theme] || THEMES.dark;
   const themeStyle = { background: T.bg, color: T.text };
   const accentColor = T.accent;
-  const accentGradient = `linear-gradient(135deg, ${T.accent} 0%, ${T.accent2} 100%)`;
   // Glass backdrop for chrome surfaces (header/sidebar/player)
   const glassStyle = T.glass ? { backdropFilter: 'blur(20px) saturate(150%)', WebkitBackdropFilter: 'blur(20px) saturate(150%)' } : {};
   const effectiveSidebarOpen = store.focusModeType === 'distractionFree' ? false : store.sidebarOpen;
@@ -1499,12 +1514,12 @@ export default function VoxPDFv4() {
           {/* Logo */}
           <div className="px-4 py-3.5 border-b flex items-center justify-between" style={{ borderColor: T.border }}>
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center trans-smooth" style={{ background: accentGradient, boxShadow: `0 4px 14px ${T.accent}45, inset 0 1px 0 rgba(255,255,255,0.28)` }}>
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center trans-smooth" style={{ background: T.accent, boxShadow: `0 3px 10px ${T.accent}35, inset 0 1px 0 rgba(255,255,255,0.22)` }}>
                 <Volume2 className="h-4 w-4" style={{ color: T.accentFg }} />
               </div>
               <div className="flex flex-col">
-                <span className="text-[17px] font-bold tracking-tight leading-none gradient-text" style={{ fontFamily: 'Syne, sans-serif', backgroundImage: accentGradient }}>VoxPDF</span>
-                <span className="text-[9px] opacity-45 leading-none mt-1 tracking-wide">Lector con voz · GLM</span>
+                <span className="text-[17px] font-bold tracking-tight leading-none" style={{ fontFamily: wordmarkFont }}>VoxPDF</span>
+                <span className="text-[10px] leading-none mt-1 tracking-wide" style={{ color: T.textMuted }}>Lector con voz · GLM</span>
               </div>
             </div>
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg trans-smooth hover:bg-black/5 dark:hover:bg-white/5" onClick={() => store.setSidebarOpen(false)}>
@@ -1535,36 +1550,37 @@ export default function VoxPDFv4() {
 
             {/* Recents Tab */}
             <TabsContent value="recents" className="flex-1 overflow-y-auto p-2.5 m-0">
-              <Button className="w-full mb-2 h-11 rounded-xl font-semibold text-[12px] trans-smooth hover:scale-[1.01] active:scale-[0.99]" style={{ background: accentGradient, color: T.accentFg, boxShadow: `0 4px 16px ${T.accent}40` }} onClick={() => fileInputRef.current?.click()}>
+              {/* Secondary open-file action — outline, so the dropzone stays the single primary CTA */}
+              <Button variant="outline" className="w-full mb-3 h-11 rounded-[10px] font-semibold text-[12px] trans-smooth hover:bg-[var(--accent)] active:scale-[0.99]" style={{ borderColor: `${accentColor}55`, color: accentColor, background: 'transparent' }} onClick={() => fileInputRef.current?.click()}>
                 <FileUp className="h-3.5 w-3.5 mr-1.5" /> Abrir archivo
               </Button>
               <div className="space-y-1">
-                <button className="w-full flex items-center gap-2.5 p-2 rounded-xl cursor-pointer trans-smooth hover:bg-[var(--accent)] text-left"
+                <button className="w-full flex items-center gap-2.5 p-2 rounded-[10px] cursor-pointer trans-smooth hover:bg-[var(--accent)] text-left"
                   onClick={() => { store.setSidebarTab('toolspanel'); setTimeout(() => document.getElementById('readurl-input')?.focus(), 150); }}>
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${accentColor}16`, color: accentColor }}>
                     <Globe className="h-3.5 w-3.5" />
                   </div>
                   <div className="flex flex-col min-w-0 flex-1">
                     <span className="text-[11.5px] font-medium leading-tight">Leer URL en voz alta</span>
-                    <span className="text-[9px] leading-tight mt-0.5" style={{ color: T.textMuted }}>Artículos y páginas web</span>
+                    <span className="text-[10px] leading-tight mt-0.5" style={{ color: T.textMuted }}>Artículos y páginas web</span>
                   </div>
                   <ChevronRight className="h-3 w-3 opacity-30 flex-shrink-0" />
                 </button>
-                <button className="w-full flex items-center gap-2.5 p-2 rounded-xl cursor-pointer trans-smooth hover:bg-[var(--accent)] text-left"
+                <button className="w-full flex items-center gap-2.5 p-2 rounded-[10px] cursor-pointer trans-smooth hover:bg-[var(--accent)] text-left"
                   onClick={() => { store.setSidebarTab('toolspanel'); setTimeout(() => document.getElementById('paste-text-input')?.focus(), 150); }}>
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${accentColor}16`, color: accentColor }}>
                     <ClipboardPaste className="h-3.5 w-3.5" />
                   </div>
                   <div className="flex flex-col min-w-0 flex-1">
                     <span className="text-[11.5px] font-medium leading-tight">Pegar texto para leer</span>
-                    <span className="text-[9px] leading-tight mt-0.5" style={{ color: T.textMuted }}>Notas, correos, apuntes</span>
+                    <span className="text-[10px] leading-tight mt-0.5" style={{ color: T.textMuted }}>Notas, correos, apuntes</span>
                   </div>
                   <ChevronRight className="h-3 w-3 opacity-30 flex-shrink-0" />
                 </button>
               </div>
-              <div className="text-[9px] opacity-40 uppercase tracking-[0.14em] mb-1.5 px-1 mt-4">Archivos recientes</div>
+              <div className="text-[10px] opacity-50 uppercase tracking-[0.14em] mb-1.5 px-1 mt-4" style={{ color: T.textMuted }}>Archivos recientes</div>
               {getRecents().map((r: any, i: number) => (
-                <div key={i} className="flex items-center gap-2.5 p-2 rounded-xl cursor-pointer trans-smooth hover:bg-[var(--accent)] text-[11px]"
+                <div key={i} className="flex items-center gap-2.5 p-2 rounded-[10px] cursor-pointer trans-smooth hover:bg-[var(--accent)] text-[11px]"
                   onClick={() => toast({ title: 'Recarga para abrir', description: r.name })}>
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${accentColor}14`, color: accentColor }}>
                     <FileText className="h-3.5 w-3.5" />
@@ -1573,11 +1589,11 @@ export default function VoxPDFv4() {
                 </div>
               ))}
               {getRecents().length === 0 && (
-                <div className="flex flex-col items-center gap-2 py-8 opacity-50">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center border" style={{ borderColor: T.borderStrong }}>
-                    <FileText className="h-4 w-4" />
+                <div className="flex flex-col items-center gap-2 py-8 opacity-60">
+                  <div className="w-11 h-11 rounded-[10px] flex items-center justify-center border" style={{ borderColor: T.borderStrong }}>
+                    <FileText className="h-5 w-5" />
                   </div>
-                  <span className="text-[10px]">Aún no hay archivos recientes</span>
+                  <span className="text-[10px]" style={{ color: T.textMuted }}>Aún no hay archivos recientes</span>
                 </div>
               )}
             </TabsContent>
@@ -1585,12 +1601,12 @@ export default function VoxPDFv4() {
             {/* TOC Tab */}
             <TabsContent value="toc" className="flex-1 overflow-y-auto p-2.5 m-0">
               {store.chapters.map((ch, i) => (
-                <div key={i} className="flex items-center gap-2.5 p-2 rounded-xl cursor-pointer trans-smooth hover:bg-[var(--accent)] text-[11px]"
+                <div key={i} className="flex items-center gap-2.5 p-2 rounded-[10px] cursor-pointer trans-smooth hover:bg-[var(--accent)] text-[11px]"
                   onClick={() => { jumpTo(ch.startIdx); store.setSidebarOpen(false); }}
                   style={store.currentParaIdx >= ch.startIdx && (i === store.chapters.length - 1 || store.currentParaIdx < store.chapters[i + 1]?.startIdx) ? { background: `${accentColor}15`, color: accentColor, borderLeft: `2px solid ${accentColor}` } : { borderLeft: '2px solid transparent' }}>
-                  <span className="text-[8px] opacity-40 w-3 text-right flex-shrink-0">{i + 1}</span>
+                  <span className="text-[10px] opacity-50 w-3 text-right flex-shrink-0">{i + 1}</span>
                   <span className="truncate flex-1">{ch.title}</span>
-                  <span className="text-[9px] opacity-30 flex-shrink-0">p.{ch.page}</span>
+                  <span className="text-[10px] opacity-40 flex-shrink-0">p.{ch.page}</span>
                 </div>
               ))}
               {store.chapters.length === 0 && <div className="text-[11px] opacity-30 text-center py-4">Sin capítulos detectados</div>}
@@ -1613,7 +1629,7 @@ export default function VoxPDFv4() {
             <TabsContent value="tools" className="flex-1 overflow-y-auto p-2 m-0 space-y-1">
               {/* Flashcards */}
               <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Flashcards → Anki (GLM)</div>
+                <div className="text-[10px] uppercase tracking-wider opacity-55 mb-1">Flashcards → Anki (GLM)</div>
                 <div className="flex gap-1">
                   <Button variant="outline" size="sm" className="text-[10px] h-6 flex-1" onClick={generateFlashcards}>
                     <Sparkles className="h-3 w-3 mr-1" /> Generar
@@ -1627,7 +1643,7 @@ export default function VoxPDFv4() {
 
               {/* Summarize */}
               <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Resumir con GLM</div>
+                <div className="text-[10px] uppercase tracking-wider opacity-55 mb-1">Resumir con GLM</div>
                 <div className="flex gap-1">
                   <Button variant="outline" size="sm" className="text-[10px] h-6 flex-1" onClick={() => summarizeDocument('brief')}>
                     <Sparkles className="h-3 w-3 mr-1" /> Breve
@@ -1643,7 +1659,7 @@ export default function VoxPDFv4() {
 
               {/* Translation (GLM) */}
               <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Traducción al vuelo (GLM)</div>
+                <div className="text-[10px] uppercase tracking-wider opacity-55 mb-1">Traducción al vuelo (GLM)</div>
                 <div className="flex items-center gap-1 mb-1">
                   <Globe className="h-3 w-3 opacity-40" />
                   <Select value={store.translation.targetLang} onValueChange={(v) => store.setTranslation({ targetLang: v })}>
@@ -1665,7 +1681,7 @@ export default function VoxPDFv4() {
 
               {/* Mind Map */}
               <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Mapa mental (GLM)</div>
+                <div className="text-[10px] uppercase tracking-wider opacity-55 mb-1">Mapa mental (GLM)</div>
                 <Button variant="outline" size="sm" className="text-[10px] h-6 w-full" onClick={() => setShowMindMap(!showMindMap)}>
                   <Brain className="h-3 w-3 mr-1" /> {showMindMap ? 'Ocultar' : 'Mostrar'} mapa
                 </Button>
@@ -1673,7 +1689,7 @@ export default function VoxPDFv4() {
 
               {/* Heat Map */}
               <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Heat map de palabras</div>
+                <div className="text-[10px] uppercase tracking-wider opacity-55 mb-1">Heat map de palabras</div>
                 <Button variant="outline" size="sm" className="text-[10px] h-6 w-full" onClick={() => setShowHeatMap(!showHeatMap)}>
                   <Flame className="h-3 w-3 mr-1" /> {showHeatMap ? 'Ocultar' : 'Mostrar'} heat map
                 </Button>
@@ -1681,7 +1697,7 @@ export default function VoxPDFv4() {
 
               {/* Export Markdown */}
               <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Exportar</div>
+                <div className="text-[10px] uppercase tracking-wider opacity-55 mb-1">Exportar</div>
                 <div className="flex gap-1">
                   <Button variant="outline" size="sm" className="text-[10px] h-6 flex-1" onClick={exportMarkdown}>
                     <FileDown className="h-3 w-3 mr-1" /> Markdown
@@ -1694,7 +1710,7 @@ export default function VoxPDFv4() {
 
               {/* Backup */}
               <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Backup anotaciones</div>
+                <div className="text-[10px] uppercase tracking-wider opacity-55 mb-1">Backup anotaciones</div>
                 <div className="flex gap-1">
                   <Button variant="outline" size="sm" className="text-[10px] h-6 flex-1" onClick={exportAnnotations}>
                     <FileUp className="h-3 w-3 mr-1" /> Exportar
@@ -1707,7 +1723,7 @@ export default function VoxPDFv4() {
 
               {/* Cloud Sync */}
               <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Sync en la nube</div>
+                <div className="text-[10px] uppercase tracking-wider opacity-55 mb-1">Sync en la nube</div>
                 {!store.isLoggedIn ? (
                   <Button variant="outline" size="sm" className="text-[10px] h-6 w-full" onClick={handleGoogleLogin}>
                     <Cloud className="h-3 w-3 mr-1" /> Google Login
@@ -1727,7 +1743,7 @@ export default function VoxPDFv4() {
 
               {/* Reading Room */}
               <div className="p-2 rounded-lg border" style={{ borderColor: T.border }}>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Sala de lectura grupal</div>
+                <div className="text-[10px] uppercase tracking-wider opacity-55 mb-1">Sala de lectura grupal</div>
                 <Button variant="outline" size="sm" className="text-[10px] h-6 w-full" onClick={() => setShowRoomModal(true)}>
                   <Users className="h-3 w-3 mr-1" /> {store.roomId ? `Sala: ${store.roomId}` : 'Crear / Unirse'}
                 </Button>
@@ -1738,12 +1754,12 @@ export default function VoxPDFv4() {
             <TabsContent value="settings" className="flex-1 overflow-y-auto p-2 m-0 space-y-2">
               {/* Theme */}
               <div>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Tema</div>
+                <div className="text-[10px] uppercase tracking-wider mb-1" style={{ color: T.textMuted }}>Tema</div>
                 <div className="grid grid-cols-3 gap-1">
                   {(['dark', 'light', 'sepia', 'contrast', 'ocean', 'eink'] as const).map(t => (
                     <Button key={t} variant={store.theme === t ? 'default' : 'outline'}
-                      size="sm" className="text-[9px] h-6"
-                      style={store.theme === t ? { background: accentGradient, color: T.accentFg } : {}}
+                      size="sm" className="text-[10px] h-7 trans-smooth"
+                      style={store.theme === t ? { background: T.accent, color: T.accentFg } : {}}
                       onClick={() => store.setTheme(t)}>
                       {t === 'eink' ? 'E-ink' : t.charAt(0).toUpperCase() + t.slice(1)}
                     </Button>
@@ -1753,13 +1769,13 @@ export default function VoxPDFv4() {
 
               {/* Font Size */}
               <div>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Tamaño: {store.fontSize}px</div>
+                <div className="text-[10px] uppercase tracking-wider opacity-55 mb-1">Tamaño: {store.fontSize}px</div>
                 <Slider value={[store.fontSize]} min={10} max={24} step={1} onValueChange={([v]) => store.setFontSize(v)} />
               </div>
 
               {/* Font Family */}
               <div>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Fuente</div>
+                <div className="text-[10px] uppercase tracking-wider opacity-55 mb-1">Fuente</div>
                 <Select value={store.fontFamily} onValueChange={store.setFontFamily}>
                   <SelectTrigger className="h-6 text-[10px]"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -1772,7 +1788,7 @@ export default function VoxPDFv4() {
 
               {/* Voice */}
               <div>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Voz TTS</div>
+                <div className="text-[10px] uppercase tracking-wider opacity-55 mb-1">Voz TTS</div>
                 <Select value={String(store.selectedVoice)} onValueChange={(v) => store.setSelectedVoice(parseInt(v))}>
                   <SelectTrigger className="h-6 text-[10px]"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -1785,19 +1801,19 @@ export default function VoxPDFv4() {
 
               {/* Speed */}
               <div>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Velocidad: {store.rate.toFixed(1)}×</div>
+                <div className="text-[10px] uppercase tracking-wider opacity-55 mb-1">Velocidad: {store.rate.toFixed(1)}×</div>
                 <Slider value={[store.rate]} min={0.5} max={3} step={0.1} onValueChange={([v]) => store.setRate(v)} />
               </div>
 
               {/* Pitch */}
               <div>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Tono: {store.pitch.toFixed(1)}</div>
+                <div className="text-[10px] uppercase tracking-wider opacity-55 mb-1">Tono: {store.pitch.toFixed(1)}</div>
                 <Slider value={[store.pitch]} min={0.5} max={2} step={0.1} onValueChange={([v]) => store.setPitch(v)} />
               </div>
 
               {/* Volume */}
               <div>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Volumen: {Math.round(store.volume * 100)}%</div>
+                <div className="text-[10px] uppercase tracking-wider opacity-55 mb-1">Volumen: {Math.round(store.volume * 100)}%</div>
                 <Slider value={[store.volume]} min={0} max={1} step={0.05} onValueChange={([v]) => store.setVolume(v)} />
               </div>
 
@@ -1843,7 +1859,7 @@ export default function VoxPDFv4() {
 
               {/* Equalizer */}
               <div>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Ecualizador de audio</div>
+                <div className="text-[10px] uppercase tracking-wider opacity-55 mb-1">Ecualizador de audio</div>
                 <Select value={store.eqPresetName} onValueChange={applyEqPreset}>
                   <SelectTrigger className="h-6 text-[10px]"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -1867,7 +1883,7 @@ export default function VoxPDFv4() {
 
               {/* Glossary */}
               <div>
-                <div className="text-[9px] uppercase tracking-wider opacity-40 mb-1">Glosario ({store.glossary.length})</div>
+                <div className="text-[10px] uppercase tracking-wider opacity-55 mb-1">Glosario ({store.glossary.length})</div>
                 <ScrollArea className="max-h-24">
                   {store.glossary.map((g, i) => (
                     <div key={i} className="flex items-center justify-between text-[10px] py-0.5">
@@ -2294,7 +2310,9 @@ export default function VoxPDFv4() {
                   <h4 className="text-xs font-semibold mb-1 flex items-center gap-1"><ScanLine className="w-3 h-3" /> OCR (Imágenes / PDFs Escaneados)</h4>
                   <input ref={ocrInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/bmp" className="hidden" onChange={handleOcrFile} />
                   <Button size="sm" className="w-full text-xs" onClick={() => ocrInputRef.current?.click()} disabled={store.ocrActive}>
-                    {store.ocrActive ? `Procesando... ${store.ocrProgress}%` : '📷 Seleccionar Imagen'}
+                    {store.ocrActive
+                      ? <><RefreshCw className="w-3 h-3 mr-1.5 animate-spin" />{`Procesando... ${store.ocrProgress}%`}</>
+                      : <><ImageIcon className="w-3 h-3 mr-1.5" />Seleccionar imagen</>}
                   </Button>
                   {store.ocrActive && (
                     <div className="w-full h-1 bg-muted rounded mt-1.5 overflow-hidden">
@@ -2306,7 +2324,7 @@ export default function VoxPDFv4() {
                       <ScrollArea className="h-28 border rounded p-1.5">
                         <p className="text-xs whitespace-pre-wrap text-muted-foreground">{store.ocrResult}</p>
                       </ScrollArea>
-                      <Button size="sm" className="w-full text-xs mt-1" onClick={loadOcrIntoReader}>🔊 Cargar en el Lector</Button>
+                      <Button size="sm" className="w-full text-xs mt-1" onClick={loadOcrIntoReader}><Play className="w-3 h-3 mr-1.5" />Cargar en el lector</Button>
                     </div>
                   )}
                 </div>
@@ -2375,12 +2393,12 @@ export default function VoxPDFv4() {
                         const data = await res.json();
                         if (!res.ok || data.error) { toast({ title: 'No se pudo leer la página', description: data.error, variant: 'destructive' }); return; }
                         const paras = (data.paragraphs as string[]).map((txt, j) => ({ text: txt, page: 1 + Math.floor(j / 20), isHeader: false, isFooter: false }));
-                        store.setFileName(`🌐 ${data.title}`);
+                        store.setFileName(data.title || 'Página web');
                         store.setParagraphs(paras);
                         store.setTotalPages(Math.ceil(paras.length / 20));
                         store.setCurrentParaIdx(0);
                         buildTOC(); computeWordFrequency(); computeMindMap();
-                        addRecent(`🌐 ${data.title}`, 0);
+                        addRecent(data.title || url, 0);
                         toast({ title: 'Página cargada', description: `${data.wordCount} palabras · ~${data.estimatedMinutes} min de lectura. Reproduciendo...` });
                         setTimeout(() => startReading(0), 400);
                       } catch (err: any) {
@@ -2388,7 +2406,7 @@ export default function VoxPDFv4() {
                       }
                       store.setWebClipLoading(false);
                     }} disabled={store.webClipLoading}>
-                      {store.webClipLoading ? 'Descargando página...' : '🔊 Cargar y Leer'}
+                      {store.webClipLoading ? <><RefreshCw className="w-3 h-3 mr-1.5 animate-spin" />Descargando página...</> : <><Play className="w-3 h-3 mr-1.5" />Cargar y leer</>}
                     </Button>
                   </div>
                 </div>
@@ -2436,16 +2454,16 @@ export default function VoxPDFv4() {
                       const paraObjs = paras.map((txt, j) => ({ text: txt, page: 1 + Math.floor(j / 20), isHeader: false, isFooter: false }));
                       // Use first ~60 chars of first paragraph as label
                       const firstLine = paras[0].slice(0, 50) + (paras[0].length > 50 ? '…' : '');
-                      store.setFileName(`📝 ${firstLine}`);
+                      store.setFileName(firstLine);
                       store.setParagraphs(paraObjs);
                       store.setTotalPages(Math.ceil(paraObjs.length / 20));
                       store.setCurrentParaIdx(0);
                       buildTOC(); computeWordFrequency(); computeMindMap();
-                      addRecent(`📝 ${firstLine}`, 0);
+                      addRecent(firstLine, 0);
                       toast({ title: 'Texto cargado', description: `${wc} palabras · ~${est} min. Reproduciendo...` });
                       setTimeout(() => startReading(0), 400);
                     }}>
-                      🔊 Leer Texto
+                      <Play className="w-3 h-3 mr-1.5" />Leer texto
                     </Button>
                   </div>
                 </div>
@@ -2495,7 +2513,7 @@ export default function VoxPDFv4() {
       <main className="flex-1 flex flex-col overflow-hidden min-w-0 relative z-10">
         {/* Top Bar */}
         <header className={isMobile ? "h-14 border-b flex items-center gap-1 px-2 flex-shrink-0" : "h-12 border-b flex items-center gap-2 px-3 flex-shrink-0"}
-          style={{ background: T.surface, borderColor: T.border, ...glassStyle, boxShadow: '0 1px 2px rgba(0,0,0,0.10), 0 8px 24px rgba(0,0,0,0.10)' }}>
+          style={{ background: T.surface, borderColor: T.borderStrong, ...glassStyle, boxShadow: '0 1px 2px rgba(0,0,0,0.08), 0 6px 20px rgba(0,0,0,0.08)' }}>
           {!effectiveSidebarOpen && (
             <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-[10px] flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-[10px] trans-smooth"} onClick={() => store.setSidebarOpen(true)}>
               <PanelLeftOpen className="h-4 w-4" />
@@ -2647,7 +2665,7 @@ export default function VoxPDFv4() {
               {/* Current position */}
               <div className="absolute w-full h-[3px]" style={{
                 top: `${store.pageProgress * 100}%`,
-                background: accentGradient,
+                background: accentColor,
                 transition: 'top 0.3s'
               }} />
             </div>
@@ -2668,80 +2686,70 @@ export default function VoxPDFv4() {
             onMouseUp={handleTextSelection}
             style={{ paddingTop: isMobile ? '12px' : '18px', paddingLeft: isMobile ? '14px' : '20px', paddingRight: isMobile ? '14px' : '20px', paddingBottom: store.parallelView ? '120px' : '100px', ...(store.focusModeType === 'narrowColumn' ? { maxWidth: '500px', margin: '0 auto' } : {}) }}>
 
-            {/* Drop zone — hero launchpad */}
+            {/* Drop zone — hero launchpad: ONE primary action (drop file), quiet text-link secondaries */}
             {!store.paragraphs.length && !cbzImages.length && (
-              <div className="flex flex-col items-center justify-center min-h-full gap-6 py-16 anim-fade-up">
-                {/* Hero */}
-                <div className="relative">
-                  <div className="absolute inset-0 blur-3xl opacity-30 rounded-full scale-110" style={{ background: accentGradient }} />
-                  <div className="relative w-20 h-20 rounded-[22px] flex items-center justify-center trans-smooth" style={{ background: accentGradient, boxShadow: `0 12px 36px ${T.accent}45, inset 0 1px 0 rgba(255,255,255,0.28)` }}>
-                    <Volume2 className="h-9 w-9" style={{ color: T.accentFg }} />
-                  </div>
+              <div className="flex flex-col items-center justify-center min-h-full py-16 anim-fade-up">
+                {/* Brand mark — solid tile, no compensating glow */}
+                <div className="w-14 h-14 rounded-[10px] flex items-center justify-center trans-smooth" style={{ background: T.accent, boxShadow: `0 6px 20px ${T.accent}30, inset 0 1px 0 rgba(255,255,255,0.22)` }}>
+                  <Volume2 className="h-7 w-7" style={{ color: T.accentFg }} />
                 </div>
-                <div className="text-center">
-                  <div className="text-[34px] font-bold tracking-tight gradient-text leading-none" style={{ fontFamily: 'Syne, sans-serif', backgroundImage: accentGradient }}>VoxPDF</div>
-                  <div className="text-[12px] mt-3 max-w-[320px] leading-relaxed mx-auto" style={{ color: T.textMuted }}>
+                <div className="text-center mt-5">
+                  <div className="text-[28px] font-bold tracking-tight leading-none" style={{ fontFamily: wordmarkFont }}>VoxPDF</div>
+                  <div className="text-[12px] mt-2.5 max-w-[380px] leading-relaxed mx-auto" style={{ color: T.textMuted }}>
                     Lee PDF, EPUB, DOCX, CBZ en voz alta. OCR, resúmenes con GLM, speed reading, traducción y más.
                   </div>
                 </div>
 
-                {/* Gradient-border dropzone */}
-                <div className={`w-full max-w-[380px] rounded-2xl p-[1.5px] trans-smooth card-lift ${isDragging ? 'scale-[1.02]' : ''}`}
+                {/* Dropzone — the ONE primary action. WCAG-visible boundary, accent feedback on drag */}
+                <div className={`w-full max-w-[380px] rounded-2xl border-[1.5px] trans-smooth ${isDragging ? 'scale-[1.01]' : ''} mt-8`}
                   style={{
-                    background: isDragging ? accentGradient : `linear-gradient(135deg, ${T.borderStrong}, ${T.border})`,
-                    boxShadow: isDragging ? `0 0 0 4px ${accentColor}26, 0 16px 48px ${T.accent}35` : T.shadow,
+                    borderColor: isDragging ? accentColor : T.borderHero,
+                    background: isDragging ? `${accentColor}0d` : T.surface2,
+                    boxShadow: isDragging ? `0 8px 28px ${T.accent}25` : T.shadow,
                   }}>
-                  <div className="rounded-[calc(1rem-1px)] px-8 py-9 text-center cursor-pointer trans-smooth"
-                    style={{ background: T.surface2 }}
+                  <div className="px-8 py-8 text-center cursor-pointer trans-smooth"
                     onClick={() => fileInputRef.current?.click()}>
-                    <div className="w-12 h-12 rounded-xl mx-auto mb-3.5 flex items-center justify-center trans-smooth" style={{ background: `${accentColor}16`, color: accentColor, border: `1px solid ${accentColor}30` }}>
-                      <Plus className="h-5 w-5" />
+                    <div className="w-12 h-12 rounded-[10px] mx-auto mb-4 flex items-center justify-center trans-smooth" style={{ background: `${accentColor}18`, color: accentColor, border: `1px solid ${accentColor}30` }}>
+                      <FileUp className="h-5 w-5" />
                     </div>
                     <p className="text-[13px] font-semibold">Arrastra tu archivo aquí</p>
                     <p className="text-[11px] mt-1" style={{ color: T.textMuted }}>o haz clic para explorar</p>
                     <div className="flex gap-1.5 flex-wrap justify-center mt-4">
-                      {['PDF', 'EPUB', 'DOCX', 'TXT', 'CBZ', 'CBR', 'IMG'].map(k => (
-                        <span key={k} className="px-2 py-0.5 rounded-md text-[9px] font-semibold tracking-wide trans-smooth" style={{ background: `${accentColor}10`, color: T.textMuted, border: `1px solid ${T.border}` }}>{k}</span>
+                      {(isMobile ? ['PDF', 'EPUB', 'DOCX', 'TXT', 'CBZ'] : ['PDF', 'EPUB', 'DOCX', 'TXT', 'CBZ', 'CBR', 'IMG']).map(k => (
+                        <span key={k} className="px-2 py-0.5 rounded-md text-[10px] font-semibold tracking-wide trans-smooth" style={{ background: 'transparent', color: T.textMuted, border: `1px solid ${accentColor}38` }}>{k}</span>
                       ))}
                     </div>
                   </div>
                 </div>
 
-                {/* Quick actions */}
-                <div className={`grid gap-3 w-full max-w-[380px] ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                  <button className="flex items-center gap-3 p-3.5 rounded-xl border text-left trans-smooth card-lift"
-                    style={{ background: T.surface2, borderColor: T.border }}
+                {/* Quiet secondary actions — fully muted (icon included): the dropzone is the only saturated element */}
+                <div className="flex items-center justify-center gap-6 mt-8">
+                  <button className="flex items-center gap-2 py-2.5 px-2 trans-smooth hover:opacity-90 text-left"
+                    style={{ color: T.textMuted }}
                     onClick={() => { store.setSidebarTab('toolspanel'); setTimeout(() => document.getElementById('readurl-input')?.focus(), 150); }}>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${accentColor}16`, color: accentColor }}>
-                      <Globe className="h-4 w-4" />
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[11.5px] font-medium leading-tight">Leer una URL</span>
-                      <span className="text-[9px] leading-tight mt-0.5" style={{ color: T.textMuted }}>Artículos y páginas web</span>
-                    </div>
+                    <Globe className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="text-[11.5px] font-medium leading-tight">Leer una URL</span>
                   </button>
-                  <button className="flex items-center gap-3 p-3.5 rounded-xl border text-left trans-smooth card-lift"
-                    style={{ background: T.surface2, borderColor: T.border }}
+                  <div className="w-px h-4 flex-shrink-0" style={{ background: T.borderStrong }} />
+                  <button className="flex items-center gap-2 py-2.5 px-2 trans-smooth hover:opacity-90 text-left"
+                    style={{ color: T.textMuted }}
                     onClick={() => { store.setSidebarTab('toolspanel'); setTimeout(() => document.getElementById('paste-text-input')?.focus(), 150); }}>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${accentColor}16`, color: accentColor }}>
-                      <ClipboardPaste className="h-4 w-4" />
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[11.5px] font-medium leading-tight">Pegar texto</span>
-                      <span className="text-[9px] leading-tight mt-0.5" style={{ color: T.textMuted }}>Notas, correos, apuntes</span>
-                    </div>
+                    <ClipboardPaste className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="text-[11.5px] font-medium leading-tight">Pegar texto</span>
                   </button>
                 </div>
 
-                {/* Keyboard shortcuts — kbd style */}
-                <div className="flex items-center gap-2 flex-wrap justify-center">
-                  <span className="text-[9px] uppercase tracking-[0.14em]" style={{ color: T.textMuted }}>Atajos</span>
+                {/* Keyboard shortcuts — kbd style (desktop only: too dense for small screens) */}
+                {!isMobile && (
+                <div className="flex items-center gap-2 flex-wrap justify-center mt-8">
+                  <span className="text-[10px] uppercase tracking-[0.14em]" style={{ color: T.textMuted }}>Atajos</span>
                   <div className="flex gap-1 flex-wrap justify-center">
                     {['Space', '← →', 'Ctrl+F', 'B', 'R'].map(k => (
-                      <kbd key={k} className="px-1.5 py-0.5 rounded-md font-mono font-semibold trans-smooth" style={{ background: `${accentColor}0d`, color: T.text, border: `1px solid ${T.border}`, borderBottom: `2px solid ${T.borderStrong}`, fontSize: '9px' }}>{k}</kbd>
+                      <kbd key={k} className="px-1.5 py-0.5 rounded-md font-mono font-semibold trans-smooth" style={{ background: `${accentColor}0d`, color: T.text, border: `1px solid ${T.border}`, borderBottom: `2px solid ${T.borderStrong}`, fontSize: '10px' }}>{k}</kbd>
                     ))}
                   </div>
                 </div>
+                )}
               </div>
             )}
 
@@ -2822,12 +2830,12 @@ export default function VoxPDFv4() {
                   <div key={p.origIdx} className={`rounded-2xl card-lift ${isMobile ? 'p-3' : 'p-6'} border`}
                     style={{
                       background: T.surface2,
-                      borderColor: p.origIdx === store.currentParaIdx ? `${T.accent}55` : T.border,
-                      boxShadow: p.origIdx === store.currentParaIdx ? `0 0 0 1px ${T.accent}30, ${T.shadow}` : T.shadow,
+                      borderColor: p.origIdx === store.currentParaIdx ? `${accentColor}66` : T.border,
+                      boxShadow: p.origIdx === store.currentParaIdx ? `0 3px 16px ${T.accent}18, ${T.shadow}` : T.shadow,
                       opacity: store.lazyRendering && Math.abs(p.origIdx - store.currentParaIdx) > 100 ? 0.3 : 1,
                     }}
                     data-page={p.page}>
-                    <div className="text-[9px] opacity-30 text-right mb-2 font-medium">Página {p.page} · Párrafo {p.origIdx + 1}</div>
+                    <div className="text-[10px] opacity-45 text-right mb-2 font-medium">Página {p.page} · Párrafo {p.origIdx + 1}</div>
                     <ContextMenu>
                       <ContextMenuTrigger asChild>
                         <div data-para-idx={p.origIdx}
@@ -2932,45 +2940,33 @@ export default function VoxPDFv4() {
         {store.paragraphs.length > 0 && (
           <div ref={playerRef} className="border-t flex-shrink-0"
             style={{ background: T.surface, borderColor: T.border, ...glassStyle }}>
-            {/* Progress bar — taller on mobile for touch, gradient fill */}
+            {/* Progress bar — taller on mobile for touch, solid accent fill */}
             <div className={isMobile ? "h-2 cursor-pointer group" : "h-1.5 cursor-pointer group"} style={{ background: 'rgba(128,128,160,0.15)' }}
               onClick={(e) => {
                 const pct = e.nativeEvent.offsetX / e.currentTarget.offsetWidth;
                 jumpTo(Math.floor(pct * store.paragraphs.length));
               }}>
-              <div className="h-full transition-all duration-300 rounded-r-full" style={{ width: `${store.pageProgress * 100}%`, background: accentGradient }} />
+              <div className="h-full transition-all duration-300 rounded-r-full" style={{ width: `${store.pageProgress * 100}%`, background: accentColor }} />
             </div>
-            <div className={isMobile ? "flex items-center gap-1 px-2 py-2.5" : "flex items-center gap-1.5 px-3 py-2.5"}>
-              <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-full flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-full trans-smooth"} onClick={prevPara}>
+            <div className={isMobile ? "flex items-center gap-1 px-2 py-3" : "flex items-center gap-1.5 px-3 py-3"}>
+              <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-full flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-full trans-smooth"} onClick={prevPara} title="Párrafo anterior">
                 <SkipBack className="h-3.5 w-3.5" />
               </Button>
-              {/* Skip -10s — hide on mobile to save space */}
-              {!isMobile && (
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full trans-smooth" onClick={() => {/* skip -10s */}}>
-                  <RotateCcw className="h-3.5 w-3.5" />
-                </Button>
-              )}
-              {/* Floating play button — gradient + glow */}
-              <Button className={isMobile ? "h-12 w-12 rounded-full flex-shrink-0 play-glow trans-smooth hover:scale-105 active:scale-95" : "h-10 w-10 rounded-full flex-shrink-0 trans-smooth hover:scale-105 active:scale-95"}
-                style={{ background: accentGradient, color: T.accentFg, boxShadow: `0 4px 16px ${T.accent}45` }} onClick={togglePlay}>
+              {/* Play button — solid accent, tactile press, soft tinted shadow */}
+              <Button className={isMobile ? "h-12 w-12 rounded-full flex-shrink-0 trans-smooth hover:scale-[1.04] active:scale-[0.96]" : "h-10 w-10 rounded-full flex-shrink-0 trans-smooth hover:scale-[1.04] active:scale-[0.96]"}
+                style={{ background: T.accent, color: T.accentFg, boxShadow: `0 4px 14px ${T.accent}38, inset 0 1px 0 rgba(255,255,255,0.18)` }} onClick={togglePlay} title={store.playing ? 'Pausar' : 'Reproducir'}>
                 {store.playing ? <Pause className={isMobile ? "h-5 w-5" : "h-4 w-4"} /> : <Play className={isMobile ? "h-5 w-5 ml-0.5" : "h-4 w-4 ml-0.5"} />}
               </Button>
-              {/* Skip +10s — hide on mobile */}
-              {!isMobile && (
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full trans-smooth" onClick={() => {/* skip +10s */}}>
-                  <RefreshCw className="h-3.5 w-3.5" />
-                </Button>
-              )}
-              <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-full flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-full trans-smooth"} onClick={nextPara}>
+              <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-full flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-full trans-smooth"} onClick={nextPara} title="Párrafo siguiente">
                 <SkipForward className="h-3.5 w-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-full flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-full trans-smooth"} onClick={() => stopReading()}>
+              <Button variant="ghost" size="icon" className={isMobile ? "h-9 w-9 rounded-full flex-shrink-0 trans-smooth" : "h-8 w-8 rounded-full trans-smooth"} onClick={() => stopReading()} title="Detener">
                 <Square className="h-3 w-3" />
               </Button>
 
               <div className="flex-1 text-center min-w-0">
                 <div className="text-[11px] font-semibold truncate">{store.fileName}</div>
-                <div className="text-[9px] opacity-40">
+                <div className="text-[10px]" style={{ color: T.textMuted }}>
                   Párrafo {store.currentParaIdx + 1}/{store.paragraphs.length} · p.{store.paragraphs[store.currentParaIdx]?.page || '-'}
                 </div>
               </div>
@@ -2981,7 +2977,7 @@ export default function VoxPDFv4() {
                   {[1, 1.5, 2].map(s => (
                     <button key={s}
                       className={`text-[10px] font-semibold px-2.5 h-6 rounded-full trans-smooth ${store.rate === s ? 'shadow-sm' : 'opacity-55 hover:opacity-90'}`}
-                      style={store.rate === s ? { background: accentGradient, color: T.accentFg } : {}}
+                      style={store.rate === s ? { background: accentColor, color: T.accentFg } : {}}
                       onClick={() => store.setRate(s)}>
                       {s}×
                     </button>
@@ -2989,7 +2985,7 @@ export default function VoxPDFv4() {
                 </div>
               )}
               {!isMobile && (
-                <span className="text-[9px] opacity-40 min-w-[40px] text-right font-medium tabular-nums">
+                <span className="text-[10px] min-w-[40px] text-right font-medium tabular-nums" style={{ color: T.textMuted }}>
                   {formatTime(Math.round((store.paragraphs.length - store.currentParaIdx) * 12 / (store.rate * 3)))}
                 </span>
               )}
@@ -3012,7 +3008,7 @@ export default function VoxPDFv4() {
           <Textarea value={bookmarkNote} onChange={(e) => setBookmarkNote(e.target.value)} placeholder="Nota opcional…" rows={3} />
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setShowBookmarkModal(false)}>Cancelar</Button>
-            <Button className="flex-1 trans-smooth hover:shadow-lg" style={{ background: accentGradient, color: T.accentFg }} onClick={saveBookmark}>Guardar</Button>
+            <Button className="flex-1 trans-smooth hover:brightness-110 active:brightness-95" style={{ background: T.accent, color: T.accentFg, boxShadow: `0 2px 10px ${T.accent}30` }} onClick={saveBookmark}>Guardar</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -3025,7 +3021,7 @@ export default function VoxPDFv4() {
           </Button>
           <div className="relative h-[120px] flex items-center justify-center">
             <div className="absolute top-0 bottom-0 left-1/2 w-px bg-white/10" />
-            <div className="text-5xl font-extrabold tracking-tight text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <div className="text-5xl font-extrabold tracking-tight text-white" style={{ fontFamily: wordmarkFont }}>
               {rsvpWord}
             </div>
           </div>
@@ -3143,7 +3139,7 @@ export default function VoxPDFv4() {
             </div>
           ) : (
             <div className="space-y-3">
-              <Button className="w-full trans-smooth hover:shadow-lg" style={{ background: accentGradient, color: T.accentFg }} onClick={createRoom}>
+              <Button className="w-full trans-smooth hover:brightness-110 active:brightness-95" style={{ background: T.accent, color: T.accentFg, boxShadow: `0 2px 10px ${T.accent}30` }} onClick={createRoom}>
                 <Users className="h-4 w-4 mr-2" />Crear nueva sala
               </Button>
               <div className="flex gap-2">
