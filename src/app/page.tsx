@@ -272,9 +272,21 @@ export default function VoxPDFv4() {
   // Makes ALL shadcn components (Button outline, Dialog, Select, Tabs…) adapt
   // to the active VoxPDF theme automatically. Without this, outline variants
   // render with light-mode colors (white bg) on dark themes.
+  // ALSO toggles `.dark` class on <html> so Tailwind `dark:` variants in shadcn
+  // components (Tabs active state, Select bg, Switch thumb, Input bg…) activate.
+  // The dark themes list MUST match the pre-hydration bootstrap in layout.tsx.
+  const DARK_THEMES = ['dark', 'ocean', 'contrast'];
   useEffect(() => {
     const t = THEMES[store.theme] || THEMES.dark;
     const root = document.documentElement;
+    // Sync .dark class — enables Tailwind dark: variants in shadcn components
+    if (DARK_THEMES.includes(store.theme)) {
+      root.classList.add('dark');
+      root.style.colorScheme = 'dark';
+    } else {
+      root.classList.remove('dark');
+      root.style.colorScheme = 'light';
+    }
     root.style.setProperty('--background', t.bg);
     root.style.setProperty('--foreground', t.text);
     root.style.setProperty('--card', t.surface2);

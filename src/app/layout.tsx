@@ -42,8 +42,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Pre-hydration theme bootstrap: runs SYNCHRONOUSLY before React hydrates.
+  // - Reads localStorage for the saved theme (defaults to 'dark' on first visit)
+  // - Adds `.dark` class to <html> so Tailwind `dark:` variants in shadcn components
+  //   (Tabs active state, Select bg, Switch thumb, Input bg, Button outline, etc.) activate
+  //   from the very first paint — no FOUC, no "light flash then dark"
+  // - Sets data-theme attribute so non-JS / pre-hydration CSS can adapt
+  // The dark themes list MUST match the `darkThemes` array in page.tsx theme bridge effect.
+  const themeBootstrap = `(function(){try{var s=JSON.parse(localStorage.getItem('vox4_settings')||'{}');var t=s.theme||'dark';var d=['dark','ocean','contrast'];if(d.indexOf(t)>=0){document.documentElement.classList.add('dark');}document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=(d.indexOf(t)>=0?'dark':'light');}catch(e){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark';}})();`;
+
   return (
     <html lang="es" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${syne.variable} ${sourceSerif.variable} antialiased`}
         style={{ margin: 0, padding: 0, overflow: 'hidden' }}
