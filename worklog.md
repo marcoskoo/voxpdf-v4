@@ -361,3 +361,22 @@ Stage Summary:
 - BUG RESUELTO: "Modo oscuro no funciona" → ahora dark mode aplicable desde primer paint, sin FOUC, y todos los componentes shadcn respetan dark: variants
 - Artefactos: dark-mode-*.png en download/
 - Commit: 5106f22 "fix(dark-mode): pre-hydration bootstrap + .dark class sync"
+
+---
+Task ID: 15
+Agent: main
+Task: Fix "no se visualiza el icono del panel de configuración" — el icono del panel de ajustes (gear) no se veía
+
+Work Log:
+- Investigación con agent-browser en producción (desktop 1280x800 y mobile 390x844)
+- Medición con eval: tablist clientWidth=261, scrollWidth=332, lastTab(Ajustes).x=303 — Ajustes totalmente fuera del viewport en estado default (scrollLeft=0)
+- VLM confirmó: solo 6-7 iconos visibles, gear de Ajustes NO visible sin scroll horizontal manual
+- Diagnóstico: la tira de tabs del sidebar tiene 11 pestañas en flex overflow-x-auto (single row horizontal scroll). Ajustes (último) quedaba cortado
+- Fix: cambiar TabsList de `flex overflow-x-auto no-scrollbar` → `flex flex-wrap` para que las 11 pestañas envuelvan a 2 filas y todas sean visibles sin scroll
+- Validación: tsc OK, next build OK, push OK
+- Verificación producción (desktop y mobile): VLM confirma 11 iconos en 2 filas, gear de Ajustes visible en bottom-right
+
+Stage Summary:
+- BUG RESUELTO: "no se visualiza el icono del panel de configuración" → ahora gear de Ajustes siempre visible
+- Commit: 9d1b111 "fix(ui): make sidebar tab strip wrap so Ajustes (gear) is always visible"
+- Artefactos: config-icon-*.png en download/
