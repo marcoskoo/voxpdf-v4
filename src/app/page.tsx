@@ -1543,7 +1543,7 @@ export default function VoxPDFv4() {
           <Tabs value={store.sidebarTab} onValueChange={store.setSidebarTab} className="flex-1 flex flex-col overflow-hidden">
             <div className="px-2 pt-2 pb-2 border-b flex-shrink-0" style={{ borderColor: T.border }}>
               <TabsList
-                className="flex overflow-x-auto p-1 h-auto rounded-xl gap-0.5 flex-shrink-0 no-scrollbar w-full"
+                className="flex flex-wrap p-1 h-auto rounded-xl gap-0.5 flex-shrink-0 w-full"
                 style={{ background: T.surface3, border: `1px solid ${T.border}` }}
               >
                 <TabsTrigger value="recents" className="h-8 w-10 rounded-lg flex-shrink-0 flex items-center justify-center !text-[var(--muted-foreground)] data-[state=active]:!bg-[var(--accent)] data-[state=active]:!text-[var(--accent-solid)] trans-smooth" title="Recientes"><BookOpen className="h-3.5 w-3.5" /></TabsTrigger>
